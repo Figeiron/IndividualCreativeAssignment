@@ -1,6 +1,7 @@
 from core.events import Event, EventType
 import winsound
 
+
 class ConsoleViewer:
     def __init__(self, context):
         self.context = context
@@ -57,26 +58,29 @@ class ConsoleViewer:
         if event.type == EventType.ERROR:
             self.print_banner(str(event.data["error_message"]))
 
-
     @staticmethod
     def print_banner(title: str):
-        width = len(title) + 6
-        print("╔" + "═" * (width - 2) + "╗")
-        print(f"║  {title}  ║")
-        print("╚" + "═" * (width - 2) + "╝")
+        rows = title.split("\n")
+        rows_width = [len(row) for row in rows]
+        max_width = max(rows_width) + 2
 
+        print("╔" + "═" * max_width + "╗")
+        for i, row in enumerate(rows):
+            j = 0
+            if rows_width[i] % 2 == 0:
+                j = 1
+            print(f"║{" " * int((max_width - rows_width[i] + j) / 2)}{row}{" " * int((max_width - rows_width[i]) / 2)}║")
+        print("╚" + "═" * max_width + "╝")
 
     def show_service_menu(self):
         print("\n══ Доступні сервіси ══")
         for i, service in enumerate(self.services.keys(), 1):
             print(f"{i}. {service}")
 
-
     def show_exit_menu(self):
         print("\n══ Оберіть пункт ══")
         for i, service in enumerate(self.exit_menu.keys(), 1):
             print(f"{i}. {service}")
-
 
     def pick_exit_menu_command(self):
         while True:
