@@ -27,6 +27,8 @@ package "Core" {
         START
         IDLE
         ERROR
+        SERVICE_AVAILABLE
+        COMMAND_AVAILABLE
         ...
     }
 
@@ -61,6 +63,24 @@ package "App & UI" {
     }
 }
 
+package "Modules: About" {
+    class AboutService {
+        + displayed_name: str
+        + {static} get_about_creator()
+        + get_about_program()
+    }
+
+    class GetAboutCreator {
+        + service: AboutService
+        # _execute(context)
+    }
+
+    class GetAboutProgram {
+        + service: AboutService
+        # _execute(context)
+    }
+}
+
 package "Modules: Translator" {
     class TranslatorHelperService {
         + displayed_name: str
@@ -75,12 +95,19 @@ package "Modules: Translator" {
 }
 
 "Core" -[hidden]down-> "App & UI"
-"App & UI" -[hidden]down-> "Modules: Translator"
+"App & UI" -[hidden]down-> "Modules: About"
+"Modules: About" -[hidden]down-> "Modules: Translator"
 
 Application "1" *-- "1" AppContext
 AppContext "1" *-- "1" EventDispatcher
+
+Service <|-- AboutService
 Service <|-- TranslatorHelperService
+Command <|-- GetAboutCreator
+Command <|-- GetAboutProgram
 Command <|-- TranslateTextCommand
+
+AboutService "1" o-- "*" Command : registers
 TranslatorHelperService "1" o-- "*" Command : registers
 EventDispatcher "1" o-- "*" Event : manages
 Event "*" -- "1" EventType
