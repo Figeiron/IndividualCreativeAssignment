@@ -22,11 +22,11 @@ context.events.subscribe(viewer)
 context.events.subscribe(trigger)
 
 about_service = AboutService(context)
-t_h_service = TranslatorHelperService(context)
+# t_h_service = TranslatorHelperService(context)
 graph_service = GraphTheoryService(context)
 
 app.register_service(graph_service.displayed_name, graph_service)
-app.register_service(t_h_service.displayed_name, t_h_service)
+# app.register_service(t_h_service.displayed_name, t_h_service)
 app.register_service(about_service.displayed_name, about_service)
 
 app.run()
