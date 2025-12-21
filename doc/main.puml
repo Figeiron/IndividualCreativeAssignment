@@ -1,0 +1,92 @@
+@startuml
+skinparam style strictuml
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+package "Core" {
+    abstract class Command {
+        + name: str
+        + description: str
+        + execute(context)
+        {abstract} # _execute(context)
+    }
+
+    abstract class Service {
+        + context: AppContext
+        + commands: dict
+        + register_command(name, command_cls)
+        + emit_event(event)
+    }
+
+    class Event {
+        + type: EventType
+        + data: dict
+    }
+
+    enum EventType {
+        START
+        IDLE
+        ERROR
+        ...
+    }
+
+    class EventDispatcher {
+        - _queue: deque
+        - _subscribers: list
+        + emit(event)
+        + subscribe(listener)
+        + dispatch()
+    }
+}
+
+package "App & UI" {
+    class Application {
+        + handle_event(event)
+        + register_service(name, service)
+        + run()
+    }
+
+    class AppContext {
+        + data: dict
+        + events: EventDispatcher
+    }
+
+    class ConsoleViewer {
+        + handle_event(event)
+        + start()
+    }
+
+    class TriggerListener {
+        + handle_event(event)
+    }
+}
+
+package "Modules: Translator" {
+    class TranslatorHelperService {
+        + displayed_name: str
+        - api: LibreTranslateAPI
+        + translate_text(text)
+    }
+
+    class TranslateTextCommand {
+        + service: TranslatorHelperService
+        # _execute(context)
+    }
+}
+
+"Core" -[hidden]down-> "App & UI"
+"App & UI" -[hidden]down-> "Modules: Translator"
+
+Application "1" *-- "1" AppContext
+AppContext "1" *-- "1" EventDispatcher
+Service <|-- TranslatorHelperService
+Command <|-- TranslateTextCommand
+TranslatorHelperService "1" o-- "*" Command : registers
+EventDispatcher "1" o-- "*" Event : manages
+Event "*" -- "1" EventType
+
+EventDispatcher .up.> Application : notifies
+EventDispatcher .right.> ConsoleViewer : notifies
+EventDispatcher .left.> TriggerListener : notifies
+
+@enduml
