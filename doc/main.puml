@@ -7,11 +7,13 @@ package "Core" {
     abstract class Command {
         + name: str
         + description: str
+        + expected_params: list
         + execute(context)
         {abstract} # _execute(context)
     }
 
     abstract class Service {
+        + {static} displayed_name: str
         + context: AppContext
         + commands: dict
         + register_command(name, command_cls)
@@ -21,30 +23,46 @@ package "Core" {
     class Event {
         + type: EventType
         + data: dict
+        + __init__(type, **data)
     }
 
     enum EventType {
         START
         IDLE
+        STEP
+        FINISH
+        UPDATE
         ERROR
+        EXIT
         SERVICE_AVAILABLE
+        SERVICE_SELECTED
         COMMAND_AVAILABLE
-        ...
+        SHOW_SERVICES_MENU
+        COMMAND_SELECTED
+        COMMAND_EXECUTED
+        EXECUTE_COMMAND
+        EASTER_EGG
     }
 
     class EventDispatcher {
         - _queue: deque
         - _subscribers: list
+        + has_events(): bool
         + emit(event)
+        + next_event(): Event
         + subscribe(listener)
         + dispatch()
     }
 }
 
-package "App & UI" {
+package "App" {
     class Application {
+        + context: AppContext
+        + services: dict
+        + running: bool
         + handle_event(event)
         + register_service(name, service)
+        + run_command(command)
         + run()
     }
 
@@ -52,51 +70,122 @@ package "App & UI" {
         + data: dict
         + events: EventDispatcher
     }
+}
 
+package "UI" {
     class ConsoleViewer {
+        + context: AppContext
+        + commands: dict
+        + services: dict
+        + exit_menu: dict
+        + running: bool
         + handle_event(event)
-        + start()
+        {static} + print_banner(title)
+        + show_service_menu()
+        + show_exit_menu()
+        + pick_exit_menu_command()
+        + pick_service()
+        + show_commands(service_name)
+        + pick_command(service_name)
+        + execute_command(command_cls, service)
     }
+}
 
+package "Utils" {
     class TriggerListener {
+        + context: AppContext
+        + correct_order: list
+        - sequence: deque
         + handle_event(event)
+        + trigger()
     }
 }
 
 package "Modules: About" {
     class AboutService {
-        + displayed_name: str
-        + {static} get_about_creator()
-        + get_about_program()
+        + displayed_name: str = "Про програму"
+        + {static} get_about_creator(): str
+        + get_about_program(): str
     }
 
     class GetAboutCreator {
         + service: AboutService
+        + name: str
+        + description: str
         # _execute(context)
     }
 
     class GetAboutProgram {
         + service: AboutService
+        + name: str
+        + description: str
         # _execute(context)
     }
 }
 
 package "Modules: Translator" {
     class TranslatorHelperService {
-        + displayed_name: str
+        + displayed_name: str = "Перекладач"
+        + SUPPORTED_LANGS: set
         - api: LibreTranslateAPI
-        + translate_text(text)
+        + source_lang: str
+        + target_lang: str
+        + history: list
+        - _call_api()
+        + translate_text(text): str
+        + set_source_language(lang)
+        + set_target_language(lang)
+        + show_languages(): dict
+        + detect_language(text): str
+        + list_history(): str
+        + get_supported_languages(): str
+        + clear_history(): str
     }
 
     class TranslateTextCommand {
         + service: TranslatorHelperService
+        + text: str
+        # _execute(context)
+    }
+
+    class SetSourceLanguageCommand {
+        + service: TranslatorHelperService
+        + lang: str
+        # _execute(context)
+    }
+
+    class SetTargetLanguageCommand {
+        + service: TranslatorHelperService
+        + lang: str
+        # _execute(context)
+    }
+
+    class ShowLanguagesCommand {
+        + service: TranslatorHelperService
+        # _execute(context)
+    }
+
+    class DetectLanguageCommand {
+        + service: TranslatorHelperService
+        + text: str
+        # _execute(context)
+    }
+
+    class ShowHistoryCommand {
+        + service: TranslatorHelperService
+        # _execute(context)
+    }
+
+    class ClearHistoryCommand {
+        + service: TranslatorHelperService
+        # _execute(context)
+    }
+
+    class ListLanguagesCommand {
+        + service: TranslatorHelperService
         # _execute(context)
     }
 }
-
-"Core" -[hidden]down-> "App & UI"
-"App & UI" -[hidden]down-> "Modules: About"
-"Modules: About" -[hidden]down-> "Modules: Translator"
 
 Application "1" *-- "1" AppContext
 AppContext "1" *-- "1" EventDispatcher
@@ -106,14 +195,23 @@ Service <|-- TranslatorHelperService
 Command <|-- GetAboutCreator
 Command <|-- GetAboutProgram
 Command <|-- TranslateTextCommand
+Command <|-- SetSourceLanguageCommand
+Command <|-- SetTargetLanguageCommand
+Command <|-- ShowLanguagesCommand
+Command <|-- DetectLanguageCommand
+Command <|-- ShowHistoryCommand
+Command <|-- ClearHistoryCommand
+Command <|-- ListLanguagesCommand
 
-AboutService "1" o-- "*" Command : registers
-TranslatorHelperService "1" o-- "*" Command : registers
+AboutService "1" o-- "2" Command : registers
+TranslatorHelperService "1" o-- "8" Command : registers
 EventDispatcher "1" o-- "*" Event : manages
 Event "*" -- "1" EventType
 
-EventDispatcher .up.> Application : notifies
-EventDispatcher .right.> ConsoleViewer : notifies
-EventDispatcher .left.> TriggerListener : notifies
+EventDispatcher o-- "*" ConsoleViewer : notifies
+EventDispatcher o-- "*" TriggerListener : notifies
+EventDispatcher o-- "1" Application : notifies
+
+Application "1" o-- "*" Service : manages
 
 @enduml
