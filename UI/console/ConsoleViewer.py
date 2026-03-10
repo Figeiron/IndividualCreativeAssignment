@@ -1,5 +1,4 @@
 from core.events import Event, EventType
-import winsound
 
 
 class ConsoleViewer:
@@ -18,7 +17,6 @@ class ConsoleViewer:
     def handle_event(self, event):
         if event.type == EventType.EASTER_EGG:
             self.print_banner(str(event.data["message"]))
-            winsound.PlaySound("sound/easter_egg_cs.wav", winsound.SND_FILENAME)
 
         if event.type == EventType.IDLE:
             self.show_exit_menu()
