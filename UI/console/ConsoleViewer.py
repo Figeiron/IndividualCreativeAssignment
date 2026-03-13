@@ -1,4 +1,5 @@
 from core.events import Event, EventType
+from core.parameter import Parameter
 import winsound
 
 
@@ -133,15 +134,15 @@ class ConsoleViewer:
             print(f"\nКоманда: {command_cls.description}")
 
         params = []
-        if hasattr(command_cls, "expected_params"):
-            for param in command_cls.expected_params:
-                while True:
-                    try:
-                        value = input(f"Введіть {param}: ")
-                        params.append(value)
-                        break
-                    except ValueError:
-                        print("Невірне значення, спробуйте ще раз.")
+        for param in command_cls.expected_params:
+            while True:
+                try:
+                    value = input(f"Введіть {param.display_name} ({param.description}): ")
+                    typed_value = param.convert(value)
+                    params.append(typed_value)
+                    break
+                except ValueError as e:
+                    print(f"Помилка: {e}. Спробуйте ще раз.")
 
         cmd_instance = command_cls(service, *params)
         result = cmd_instance.execute(self.context)
