@@ -1,4 +1,6 @@
 from core.events import Event, EventType
+from core.parameter import Parameter
+import winsound
 
 
 class ConsoleViewer:
@@ -17,6 +19,7 @@ class ConsoleViewer:
     def handle_event(self, event):
         if event.type == EventType.EASTER_EGG:
             self.print_banner(str(event.data["message"]))
+            winsound.PlaySound("sound/easter_egg_cs.wav", winsound.SND_FILENAME)
 
         if event.type == EventType.IDLE:
             self.show_exit_menu()
@@ -131,15 +134,15 @@ class ConsoleViewer:
             print(f"\nКоманда: {command_cls.description}")
 
         params = []
-        if hasattr(command_cls, "expected_params"):
-            for param in command_cls.expected_params:
-                while True:
-                    try:
-                        value = input(f"Введіть {param}: ")
-                        params.append(value)
-                        break
-                    except ValueError:
-                        print("Невірне значення, спробуйте ще раз.")
+        for param in command_cls.expected_params:
+            while True:
+                try:
+                    value = input(f"Введіть {param.display_name} ({param.description}): ")
+                    typed_value = param.convert(value)
+                    params.append(typed_value)
+                    break
+                except ValueError as e:
+                    print(f"Помилка: {e}. Спробуйте ще раз.")
 
         cmd_instance = command_cls(service, *params)
         result = cmd_instance.execute(self.context)
