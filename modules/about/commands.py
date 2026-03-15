@@ -4,7 +4,10 @@ from core.command import Command
 class GetAboutCreator(Command):
     name = "Про розробника"
     description = "Про розробника"
-    expected_params = []
+
+    @classmethod
+    def get_params(cls, service):
+        return []
 
     def __init__(self, service):
         self.service = service
@@ -16,11 +19,13 @@ class GetAboutCreator(Command):
 class GetAboutProgram(Command):
     name = "Про програму"
     description = "Про програму"
-    expected_params = []
+
+    @classmethod
+    def get_params(cls, service):
+        return []
 
     def __init__(self, service):
         self.service = service
 
     def _execute(self, context):
         return self.service.get_about_program()
-
