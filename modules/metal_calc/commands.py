@@ -1,10 +1,14 @@
 from core.command import Command
+from core.parameter import Parameter, RangeValidator
 
 
 class GetMaterialsCommand(Command):
     name = "Довідник матеріалів"
     description = "Показати доступні тонколистові метали"
-    expected_params = []
+
+    @classmethod
+    def get_params(cls, service=None):
+        return []
 
     def __init__(self, service):
         self.service = service
@@ -16,7 +20,16 @@ class GetMaterialsCommand(Command):
 class CalculatePipeCommand(Command):
     name = "Розрахувати трубу"
     description = "Розрахувати розгортку та вартість труби (діаметр(мм), довжина(мм), індекс_матеріалу)"
-    expected_params = ["diameter", "length", "material_index"]
+
+    @classmethod
+    def get_params(cls, service=None):
+        materials_count = len(service.materials)
+        return [
+            Parameter("diameter", "Діаметер", "Діаметер труби в мм", float, validators=[RangeValidator(min_val=1)]),
+            Parameter("length", "Довжина", "Довжина труби в мм", float, validators=[RangeValidator(min_val=1)]),
+            Parameter("material_index", "Індекс матеріалу", f"від 1 до {materials_count}", int,
+                      validators=[RangeValidator(1, materials_count)])
+        ]
 
     def __init__(self, service, diameter, length, material_index):
         self.service = service
@@ -31,7 +44,17 @@ class CalculatePipeCommand(Command):
 class CalculateElbowCommand(Command):
     name = "Розрахувати коліно"
     description = "Розрахувати приблизну вартість коліна (діаметр(мм), кут(градуси), сегментів, індекс_матеріалу)"
-    expected_params = ["diameter", "angle", "segments", "material_index"]
+
+    @classmethod
+    def get_params(cls, service=None):
+        materials_count = len(service.materials)
+        return [
+            Parameter("diameter", "Діаметер", "Діаметер труби в мм", float, validators=[RangeValidator(min_val=1)]),
+            Parameter("angle", "Кут", "Кут коліна в градусах", float, validators=[RangeValidator(0, 360)]),
+            Parameter("segments", "Сегменти", "Кількість сегментів", int, validators=[RangeValidator(min_val=1)]),
+            Parameter("material_index", "Індекс матеріалу", f"від 1 до {materials_count}", int,
+                      validators=[RangeValidator(1, materials_count)])
+        ]
 
     def __init__(self, service, diameter, angle, segments, material_index):
         self.service = service
