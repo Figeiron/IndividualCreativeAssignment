@@ -22,17 +22,11 @@ class MetalCalcService(Service):
         return result.strip()
 
     def calculate_pipe_unfolding(self, diameter_mm: float, length_mm: float, material_index: int):
-        if not (0 <= material_index < len(self.materials)):
-            return "Помилка: Невірний індекс матеріалу."
-
         material = self.materials[material_index]
         pipe = Pipe(diameter_mm=diameter_mm, material=material, length_mm=length_mm)
         return str(pipe)
 
     def calculate_elbow_unfolding(self, diameter_mm: float, angle_deg: float, segments: int, material_index: int):
-        if not (0 <= material_index < len(self.materials)):
-            return "Помилка: Невірний індекс матеріалу."
-
         material = self.materials[material_index]
         elbow = Elbow(diameter_mm=diameter_mm, material=material, angle_deg=angle_deg, segments=segments)
         return str(elbow)
