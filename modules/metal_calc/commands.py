@@ -1,5 +1,5 @@
 from core.command import Command
-from core.parameter import Parameter, RangeValidator
+from core.parameter import Parameter, RangeValidator, IndexParameter
 
 
 class GetMaterialsCommand(Command):
@@ -27,15 +27,15 @@ class CalculatePipeCommand(Command):
         return [
             Parameter("diameter", "Діаметер", "Діаметер труби в мм", float, validators=[RangeValidator(min_val=1)]),
             Parameter("length", "Довжина", "Довжина труби в мм", float, validators=[RangeValidator(min_val=1)]),
-            Parameter("material_index", "Індекс матеріалу", f"від 1 до {materials_count}", int,
-                      validators=[RangeValidator(1, materials_count)]),
+            IndexParameter("material_index", "Індекс матеріалу", f"від 1 до {materials_count}", int,
+                           validators=[RangeValidator(1, materials_count)]),
         ]
 
     def __init__(self, service, diameter, length, material_index):
         self.service = service
-        self.diameter = float(diameter)
-        self.length = float(length)
-        self.material_index = int(material_index) - 1
+        self.diameter = diameter
+        self.length = length
+        self.material_index = material_index
 
     def _execute(self, context):
         return self.service.calculate_pipe_unfolding(self.diameter, self.length, self.material_index)
@@ -52,16 +52,16 @@ class CalculateElbowCommand(Command):
             Parameter("diameter", "Діаметер", "Діаметер труби в мм", float, validators=[RangeValidator(min_val=1)]),
             Parameter("angle", "Кут", "Кут коліна в градусах", float, validators=[RangeValidator(0, 360)]),
             Parameter("segments", "Сегменти", "Кількість сегментів", int, validators=[RangeValidator(min_val=1)]),
-            Parameter("material_index", "Індекс матеріалу", f"від 1 до {materials_count}", int,
+            IndexParameter("material_index", "Індекс матеріалу", f"від 1 до {materials_count}", int,
                       validators=[RangeValidator(1, materials_count)])
         ]
 
     def __init__(self, service, diameter, angle, segments, material_index):
         self.service = service
-        self.diameter = float(diameter)
-        self.angle = float(angle)
-        self.segments = int(segments)
-        self.material_index = int(material_index) - 1
+        self.diameter = diameter
+        self.angle = angle
+        self.segments = segments
+        self.material_index = material_index
 
     def _execute(self, context):
         return self.service.calculate_elbow_unfolding(self.diameter, self.angle, self.segments, self.material_index)

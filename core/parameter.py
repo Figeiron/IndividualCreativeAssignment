@@ -48,3 +48,10 @@ class Parameter:
 
             type_name = getattr(self.parse, "__name__", "заданого типу")
             raise ValueError(f"Невірний формат для '{self.display_name}'. Очікується {type_name}.")
+
+
+@dataclass(frozen=True)
+class IndexParameter(Parameter):
+    def convert(self, value: str) -> Any:
+        converted_value = super().convert(value)
+        return converted_value - 1
