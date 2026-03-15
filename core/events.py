@@ -17,6 +17,8 @@ class EventType(Enum):
     COMMAND_EXECUTED = auto()
     EXECUTE_COMMAND = auto()
     EASTER_EGG = auto()
+    RUN_COMMAND = auto()
+
 
 
 class Event:
