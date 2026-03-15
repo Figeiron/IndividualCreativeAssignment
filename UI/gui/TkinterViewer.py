@@ -22,13 +22,7 @@ class TkinterViewer:
         self.footer = tk.Frame(self.root, height=30, bg="#ffffff", relief="sunken", bd=1)
         self.footer.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=5)
 
-        self.status = tk.Label(
-            self.footer,
-            text="Ready",
-            fg="black",
-            bg="#ffffff",
-            anchor="w"
-        )
+        self.status = tk.Label(self.footer, text="Ready", fg="black", bg="#ffffff", anchor="w")
 
         self.status.pack(fill=tk.X)
 
