@@ -32,3 +32,14 @@ class Application:
                 self.context.events.emit(Event(EventType.IDLE))
 
             self.context.events.dispatch()
+
+    def run_with_gui(self, viewer):
+        self.running = True
+        self.context.events.emit(Event(EventType.START))
+
+        while self.running:
+            if not self.context.events.has_events():
+                pass
+
+            self.context.events.dispatch()
+            viewer.update_gui()
