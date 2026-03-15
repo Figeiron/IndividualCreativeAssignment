@@ -27,7 +27,7 @@ class CalculatePipeCommand(Command):
         return [
             Parameter("diameter", "Діаметер", "Діаметер труби в мм", float, validators=[RangeValidator(min_val=1)]),
             Parameter("length", "Довжина", "Довжина труби в мм", float, validators=[RangeValidator(min_val=1)]),
-            Parameter("material_index", "Індекс матеріалу", f"від 1 до {materials_count}", int,
+            Parameter("material_index", "Індекс матеріалу", f"\n{service.get_materials()}\nвід 1 до {materials_count}", int,
                       validators=[RangeValidator(1, materials_count)])
         ]
 
@@ -52,7 +52,7 @@ class CalculateElbowCommand(Command):
             Parameter("diameter", "Діаметер", "Діаметер труби в мм", float, validators=[RangeValidator(min_val=1)]),
             Parameter("angle", "Кут", "Кут коліна в градусах", float, validators=[RangeValidator(0, 360)]),
             Parameter("segments", "Сегменти", "Кількість сегментів", int, validators=[RangeValidator(min_val=1)]),
-            Parameter("material_index", "Індекс матеріалу", f"від 1 до {materials_count}", int,
+            Parameter("material_index", "Індекс матеріалу", f"\n{service.get_materials()}\nвід 1 до {materials_count}", int,
                       validators=[RangeValidator(1, materials_count)])
         ]
 
