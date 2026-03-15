@@ -7,8 +7,8 @@ package "Core" {
     abstract class Command {
         + name: str
         + description: str
-        + expected_params: list
         + execute(context)
+        + {static} get_params(service)
         {abstract} # _execute(context)
     }
 
@@ -17,6 +17,7 @@ package "Core" {
         + context: AppContext
         + commands: dict
         + register_command(name, command_cls)
+        + get_command_params(command_name): list
         + emit_event(event)
     }
 
@@ -42,6 +43,7 @@ package "Core" {
         COMMAND_EXECUTED
         EXECUTE_COMMAND
         EASTER_EGG
+        RUN_COMMAND
     }
 
     class EventDispatcher {
@@ -52,6 +54,28 @@ package "Core" {
         + next_event(): Event
         + subscribe(listener)
         + dispatch()
+    }
+
+    class Parameter << (D,orchid) >> {
+        + name: str
+        + display_name: str
+        + description: str
+        + parse: Callable
+        + validators: List[Validator]
+        + convert(value: str): Any
+    }
+
+    abstract class Validator {
+        + {abstract} __call__(value)
+    }
+
+    class RangeValidator {
+        + min_val: Any
+        + max_val: Any
+        + __call__(value)
+    }
+
+    exception ValidationError {
     }
 }
 
@@ -64,6 +88,7 @@ package "App" {
         + register_service(name, service)
         + run_command(command)
         + run()
+        + run_with_gui(viewer)
     }
 
     class AppContext {
@@ -87,7 +112,24 @@ package "UI" {
         + pick_service()
         + show_commands(service_name)
         + pick_command(service_name)
-        + execute_command(command_cls, service)
+        + execute_command(command_cls, service, command_name)
+    }
+
+    class TkinterViewer {
+        + context: AppContext
+        + root: tk.Tk
+        + sidebar: tk.Frame
+        + main_area: tk.Frame
+        + services: dict
+        + commands: dict
+        + handle_event(event)
+        + show_services_sidebar()
+        + show_commands_sidebar(service_name)
+        + show_params_form(service_name, command_name)
+        + collect_and_execute(command_cls, service, params_meta)
+        + execute_with_params(command_cls, service, args)
+        + update_gui()
+        + on_closing()
     }
 }
 
@@ -103,8 +145,8 @@ package "Utils" {
 
 package "Modules: About" {
     class AboutService {
-        + displayed_name: str = "Про програму"
-        + {static} get_about_creator(): str
+        + displayed_name: str = "Про розробника"
+        + get_about_creator(): str
         + get_about_program(): str
     }
 
@@ -123,92 +165,62 @@ package "Modules: About" {
     }
 }
 
-package "Modules: Translator" {
-    class TranslatorHelperService {
-        + displayed_name: str = "Перекладач"
-        + SUPPORTED_LANGS: set
-        - api: LibreTranslateAPI
-        + source_lang: str
-        + target_lang: str
-        + history: list
-        - _call_api()
-        + translate_text(text): str
-        + set_source_language(lang)
-        + set_target_language(lang)
-        + show_languages(): dict
-        + detect_language(text): str
-        + list_history(): str
-        + get_supported_languages(): str
-        + clear_history(): str
+package "Modules: MetalCalc" {
+    class MetalCalcService {
+        + displayed_name: str = "Калькулятор тонколистового металу"
+        + materials: list
+        + get_materials(): str
+        + calculate_pipe_unfolding(diameter, length, material_index): str
+        + calculate_elbow_unfolding(diameter, angle, segments, material_index): str
+        + get_command_params(command_name): list
     }
 
-    class TranslateTextCommand {
-        + service: TranslatorHelperService
-        + text: str
+    class GetMaterialsCommand {
+        + service: MetalCalcService
         # _execute(context)
     }
 
-    class SetSourceLanguageCommand {
-        + service: TranslatorHelperService
-        + lang: str
+    class CalculatePipeCommand {
+        + service: MetalCalcService
+        + diameter: float
+        + length: float
+        + material_index: int
         # _execute(context)
     }
 
-    class SetTargetLanguageCommand {
-        + service: TranslatorHelperService
-        + lang: str
-        # _execute(context)
-    }
-
-    class ShowLanguagesCommand {
-        + service: TranslatorHelperService
-        # _execute(context)
-    }
-
-    class DetectLanguageCommand {
-        + service: TranslatorHelperService
-        + text: str
-        # _execute(context)
-    }
-
-    class ShowHistoryCommand {
-        + service: TranslatorHelperService
-        # _execute(context)
-    }
-
-    class ClearHistoryCommand {
-        + service: TranslatorHelperService
-        # _execute(context)
-    }
-
-    class ListLanguagesCommand {
-        + service: TranslatorHelperService
+    class CalculateElbowCommand {
+        + service: MetalCalcService
+        + diameter: float
+        + angle: float
+        + segments: int
+        + material_index: int
         # _execute(context)
     }
 }
 
+Service <|-- AboutService
+Service <|-- MetalCalcService
+Command <|-- GetAboutCreator
+Command <|-- GetAboutProgram
+Command <|-- GetMaterialsCommand
+Command <|-- CalculatePipeCommand
+Command <|-- CalculateElbowCommand
+
+Validator <|-- RangeValidator
+Parameter "1" o-- "*" Validator
+Command ..> Parameter : uses
+Service ..> Parameter : uses
+
 Application "1" *-- "1" AppContext
 AppContext "1" *-- "1" EventDispatcher
 
-Service <|-- AboutService
-Service <|-- TranslatorHelperService
-Command <|-- GetAboutCreator
-Command <|-- GetAboutProgram
-Command <|-- TranslateTextCommand
-Command <|-- SetSourceLanguageCommand
-Command <|-- SetTargetLanguageCommand
-Command <|-- ShowLanguagesCommand
-Command <|-- DetectLanguageCommand
-Command <|-- ShowHistoryCommand
-Command <|-- ClearHistoryCommand
-Command <|-- ListLanguagesCommand
-
 AboutService "1" o-- "2" Command : registers
-TranslatorHelperService "1" o-- "8" Command : registers
+MetalCalcService "1" o-- "3" Command : registers
 EventDispatcher "1" o-- "*" Event : manages
 Event "*" -- "1" EventType
 
 EventDispatcher o-- "*" ConsoleViewer : notifies
+EventDispatcher o-- "*" TkinterViewer : notifies
 EventDispatcher o-- "*" TriggerListener : notifies
 EventDispatcher o-- "1" Application : notifies
 
