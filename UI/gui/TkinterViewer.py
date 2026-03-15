@@ -15,9 +15,22 @@ class TkinterViewer:
         self.services = {"Вийти": ""}
         self.commands = {}
 
-        self.sidebar = tk.Frame(self.root, width=300, bg="#f0f0f0", relief="sunken", bd=1)
+        self.sidebar = tk.Frame(self.root, width=300, bg="#ffffff", relief="sunken", bd=1)
         self.sidebar.pack(side=tk.LEFT, fill=tk.Y, padx=5, pady=5)
         self.sidebar.pack_propagate(False)
+
+        self.footer = tk.Frame(self.root, height=30, bg="#ffffff", relief="sunken", bd=1)
+        self.footer.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=5)
+
+        self.status = tk.Label(
+            self.footer,
+            text="Ready",
+            fg="black",
+            bg="#ffffff",
+            anchor="w"
+        )
+
+        self.status.pack(fill=tk.X)
 
         self.main_area = tk.Frame(self.root, bg="white")
         self.main_area.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -29,6 +42,7 @@ class TkinterViewer:
         self.context.events.emit(Event(EventType.EXIT))
 
     def handle_event(self, event):
+        self.status.config(text=event)
         if event.type == EventType.START:
             self.show_services_sidebar()
 
@@ -83,12 +97,12 @@ class TkinterViewer:
 
         for name in self.services:
             if name == "Вийти":
-                tk.Button(self.sidebar, text=name, width=25, command=self.on_closing, bg="#ff9999").pack(side=tk.BOTTOM,
-                                                                                                         pady=10)
+                tk.Button(self.sidebar, text=name, width=300, command=self.on_closing, bg="#ff9999").pack(
+                    side=tk.BOTTOM)
             else:
-                tk.Button(self.sidebar, text=name, width=25,
+                tk.Button(self.sidebar, text=name, width=300,
                           command=lambda n=name: self.context.events.emit(
-                              Event(EventType.SERVICE_SELECTED, service_name=n))).pack(pady=5)
+                              Event(EventType.SERVICE_SELECTED, service_name=n))).pack()
 
     def show_commands_sidebar(self, service_name):
         self.clear_sidebar()
@@ -97,13 +111,14 @@ class TkinterViewer:
         commands_for_service = [k for k, v in self.commands.items() if v["service"] == service_name]
 
         for cmd_name in commands_for_service:
-            tk.Button(self.sidebar, text=cmd_name, width=25,
+            tk.Button(self.sidebar, text=cmd_name, width=300,
                       command=lambda c=cmd_name: self.context.events.emit(
                           Event(EventType.EXECUTE_COMMAND, command_name=c, service_name=service_name)
-                      )).pack(pady=2)
+                      )).pack()
 
-        tk.Button(self.sidebar, text="<- До сервісів", width=25, command=self.show_services_sidebar, bg="#cccccc").pack(
-            side=tk.BOTTOM, pady=10)
+        tk.Button(self.sidebar, text="<- До сервісів", width=300, command=self.show_services_sidebar,
+                  bg="#cccccc").pack(
+            side=tk.BOTTOM)
 
     def show_result(self, title, message, color="white"):
         self.clear_main_area()
@@ -147,6 +162,7 @@ class TkinterViewer:
             param_frame.pack(fill=tk.X)
 
             tk.Label(param_frame, text=f"{param.display_name}:", width=20, anchor="w", bg="white").pack(side=tk.LEFT)
+            tk.Label(param_frame, text=f"{param.description}:", width=20, anchor="w", bg="white").pack(side=tk.RIGHT)
 
             if param.parse == bool:
                 var = tk.BooleanVar(value=False)
