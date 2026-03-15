@@ -1,6 +1,5 @@
 import tkinter as tk
 from core.events import Event, EventType
-import winsound
 
 
 class TkinterViewer:
@@ -70,12 +69,6 @@ class TkinterViewer:
         elif event.type == EventType.EXIT:
             self.root.destroy()
 
-        elif event.type == EventType.EASTER_EGG:
-            self.show_result("Easter Egg", str(event.data["message"]), color="#e6f3ff")
-            try:
-                winsound.PlaySound("sound/easter_egg_cs.wav", winsound.SND_FILENAME | winsound.SND_ASYNC)
-            except:
-                pass
 
     def clear_sidebar(self):
         for widget in self.sidebar.winfo_children():
