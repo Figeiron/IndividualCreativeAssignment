@@ -17,19 +17,26 @@ class MetalCalcService(Service):
 
     def get_materials(self):
         result = "Доступні тонколистові метали (ціна за м2):\n"
-        for i, material in enumerate(self.materials):
-            result += f"{i + 1}. {material.name}: {material.price_per_m2} грн/м2\n"
+        for material in sorted(self.materials, key=lambda x: x.id):
+            result += f"{material.id + 1}. {material.name}: {material.price_per_m2} грн/м2\n"
         return result.strip()
 
     def get_materials_count(self):
         return len(self.materials)
 
+    def get_material_by_id(self, idx):
+        for material in self.materials:
+            if material.id == idx:
+                return material
+        else:
+            raise IndexError(f"Material with {idx} not defined")
+
     def calculate_pipe_unfolding(self, diameter_mm: float, length_mm: float, material_index: int):
-        material = self.materials[material_index]
+        material = self.get_material_by_id(material_index)
         pipe = Pipe(diameter_mm=diameter_mm, material=material, length_mm=length_mm)
         return str(pipe)
 
     def calculate_elbow_unfolding(self, diameter_mm: float, angle_deg: float, segments: int, material_index: int):
-        material = self.materials[material_index]
+        material = self.get_material_by_id(material_index)
         elbow = Elbow(diameter_mm=diameter_mm, material=material, angle_deg=angle_deg, segments=segments)
         return str(elbow)
