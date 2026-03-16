@@ -1,4 +1,4 @@
-from core.parameter import ParameterSchema, IndexParameter
+from core.parameter import ParameterSchema, IndexParameter, Parameter, BoolParameter
 
 MATERIAL_IDX = ParameterSchema(
     name="material_index",
@@ -36,3 +36,10 @@ SEGMENTS = ParameterSchema(
     parse_type=int
 )
 
+HAS_SALARY = ParameterSchema(
+    name="has_salary",
+    display_name="Заробітня плата",
+    description="Чи включається заробітня плата",
+    parse_type=bool,
+    parameter_cls=BoolParameter
+)

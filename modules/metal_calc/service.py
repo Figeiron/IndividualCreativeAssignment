@@ -31,12 +31,12 @@ class MetalCalcService(Service):
         else:
             raise IndexError(f"Material with {idx} not defined")
 
-    def calculate_pipe_unfolding(self, diameter_mm: float, length_mm: float, material_index: int):
+    def calculate_pipe_unfolding(self, diameter_mm: float, length_mm: float, material_index: int, has_salary: bool):
         material = self.get_material_by_id(material_index)
-        pipe = Pipe(diameter_mm=diameter_mm, material=material, length_mm=length_mm)
+        pipe = Pipe(diameter_mm=diameter_mm, material=material, length_mm=length_mm, has_salary=has_salary)
         return str(pipe)
 
-    def calculate_elbow_unfolding(self, diameter_mm: float, angle_deg: float, segments: int, material_index: int):
+    def calculate_elbow_unfolding(self, diameter_mm: float, angle_deg: float, segments: int, material_index: int, has_salary: bool):
         material = self.get_material_by_id(material_index)
-        elbow = Elbow(diameter_mm=diameter_mm, material=material, angle_deg=angle_deg, segments=segments)
+        elbow = Elbow(diameter_mm=diameter_mm, material=material, angle_deg=angle_deg, segments=segments, has_salary=has_salary)
         return str(elbow)

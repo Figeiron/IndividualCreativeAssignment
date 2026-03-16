@@ -2,20 +2,29 @@ import math
 from dataclasses import dataclass
 from modules.metal_calc.models.materials import MetalMaterial
 
+
 @dataclass
 class Product:
     diameter_mm: float
     material: MetalMaterial
+    has_salary: bool
 
     def get_area_m2(self) -> float:
         raise NotImplementedError
 
+    def get_salary(self) -> float:
+        raise NotImplementedError
+
     def get_cost(self) -> float:
-        return self.get_area_m2() * self.material.price_per_m2
+        return (self.get_area_m2() * self.material.price_per_m2) + (self.get_salary() if self.has_salary else 0)
+
 
 @dataclass
 class Pipe(Product):
     length_mm: float
+
+    def get_salary(self) -> float:
+        return self.get_area_m2() * 50
 
     def get_width_mm(self) -> float:
         return self.diameter_mm * math.pi
@@ -32,10 +41,14 @@ class Pipe(Product):
                 f"Площа: {self.get_area_m2():.3f} м2\n"
                 f"Вартість: {self.get_cost():.2f} грн")
 
+
 @dataclass
 class Elbow(Product):
     angle_deg: float
     segments: int
+
+    def get_salary(self) -> float:
+        return self.get_area_m2() * 50
 
     def get_radius_bend(self) -> float:
         return self.diameter_mm * 1.5

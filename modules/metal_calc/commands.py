@@ -8,11 +8,13 @@ class CalculateMetalCommand(Command, ABC):
     def get_params(cls, service):
         materials_count = service.get_materials_count()
         return [
+            HAS_SALARY.build(),
             MATERIAL_IDX.with_range(1, materials_count).build(custom_desc=f"від 1 до {materials_count}")
         ]
 
-    def __init__(self, service, material_index):
+    def __init__(self, service, has_salary, material_index):
         self.service = service
+        self.has_salary = has_salary
         self.material_index = material_index
 
 
@@ -23,8 +25,8 @@ class CalculateMetalRoundCommand(CalculateMetalCommand, ABC):
             DIAMETER.with_range(min_val=1).build()
         ]
 
-    def __init__(self, service, material_index, diameter):
-        super().__init__(service, material_index)
+    def __init__(self, service, has_salary, material_index, diameter):
+        super().__init__(service, has_salary, material_index)
         self.diameter = diameter
 
 
@@ -49,12 +51,12 @@ class CalculatePipeCommand(CalculateMetalRoundCommand):
             LENGTH.with_range(min_val=1).build()
         ]
 
-    def __init__(self, service, material_index, diameter, length):
-        super().__init__(service, material_index, diameter)
+    def __init__(self, service, has_salary, material_index, diameter, length):
+        super().__init__(service, has_salary, material_index, diameter)
         self.length = length
 
     def _execute(self, context):
-        return self.service.calculate_pipe_unfolding(self.diameter, self.length, self.material_index)
+        return self.service.calculate_pipe_unfolding(self.diameter, self.length, self.material_index, self.has_salary)
 
 
 class CalculateElbowCommand(CalculateMetalRoundCommand):
@@ -68,10 +70,10 @@ class CalculateElbowCommand(CalculateMetalRoundCommand):
             SEGMENTS.with_range(min_val=1).build()
         ]
 
-    def __init__(self, service, material_index, diameter, angle, segments):
-        super().__init__(service, material_index, diameter)
+    def __init__(self, service, has_salary, material_index, diameter, angle, segments):
+        super().__init__(service, has_salary, material_index, diameter)
         self.angle = angle
         self.segments = segments
 
     def _execute(self, context):
-        return self.service.calculate_elbow_unfolding(self.diameter, self.angle, self.segments, self.material_index)
+        return self.service.calculate_elbow_unfolding(self.diameter, self.angle, self.segments, self.material_index, self.has_salary)
