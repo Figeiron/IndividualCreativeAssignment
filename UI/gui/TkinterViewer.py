@@ -61,10 +61,10 @@ class TkinterViewer:
             self.show_params_form(event.data["service_name"], event.data["command_name"])
 
         elif event.type == EventType.COMMAND_EXECUTED:
-            self.show_result("Результат", str(event.data["result"]), color="#e6ffe6")
+            self.show_result("Результат", str(event.data["result"]))
 
         elif event.type == EventType.ERROR:
-            self.show_result("Помилка", str(event.data["error_message"]), color="#ffe6e6")
+            self.show_result("Помилка", str(event.data["error_message"]))
 
         elif event.type == EventType.EXIT:
             self.root.destroy()
