@@ -52,6 +52,6 @@ class Parameter:
 
 @dataclass(frozen=True)
 class IndexParameter(Parameter):
-    def convert(self, value: str) -> Any:
+    def convert(self, value: str) -> int:
         converted_value = super().convert(value)
         return converted_value - 1
