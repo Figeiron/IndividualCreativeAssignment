@@ -30,17 +30,20 @@ class Parameter:
     parse: Callable[[str], Any] = str
     validators: List[Validator] = field(default_factory=list)
 
+    def _convert(self, value: str):
+        if self.parse == bool:
+            raise TypeError("You must be use BoolParameter")
+
+        converted_value = self.parse(value)
+
+        for validator in self.validators:
+            validator(converted_value)
+
+        return converted_value
+
     def convert(self, value: str) -> Any:
         try:
-            if self.parse == bool:
-                converted_value = value.lower() in ("yes", "true", "t", "y", "1", "так", "д", "true", "1")
-            else:
-                converted_value = self.parse(value)
-
-            for validator in self.validators:
-                validator(converted_value)
-
-            return converted_value
+            return self._convert(value)
 
         except (ValueError, TypeError, ValidationError) as e:
             if str(e):
@@ -51,9 +54,21 @@ class Parameter:
 
 
 @dataclass(frozen=True)
+class BoolParameter(Parameter):
+    parse: Callable[[str], Any] = bool
+
+    def _convert(self, value: str):
+        if self.parse != bool:
+            raise TypeError("You must be use default Parameter")
+
+        converted_value = value.lower() in ("yes", "true", "t", "y", "1", "так", "д", "true", "1")
+        return converted_value
+
+
+@dataclass(frozen=True)
 class IndexParameter(Parameter):
-    def convert(self, value: str) -> int:
-        converted_value = super().convert(value)
+    def _convert(self, value: str):
+        converted_value = super()._convert(value)
         return converted_value - 1
 
 
@@ -75,7 +90,7 @@ class ParameterSchema:
         all_validators = list(self.validators)
         if extra_validators:
             all_validators.extend(extra_validators)
-            
+
         return self.parameter_cls(
             name=self.name,
             display_name=self.display_name,
