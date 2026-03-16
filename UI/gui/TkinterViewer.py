@@ -154,7 +154,7 @@ class TkinterViewer:
             if param.parse == bool:
                 var = tk.BooleanVar(value=False)
                 self.current_params_values[param.name] = var
-                tk.Checkbutton(param_frame, text=param.description, variable=var, bg="white").pack(side=tk.LEFT)
+                tk.Checkbutton(param_frame, variable=var, bg="white").pack(side=tk.LEFT)
 
             elif param.parse in (int, float):
                 if param.name == "diameter": 

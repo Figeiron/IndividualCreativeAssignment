@@ -1,4 +1,4 @@
-from core.parameter import ParameterSchema, IndexParameter, Parameter, BoolParameter
+from core.parameter import ParameterSchema, IndexParameter, BoolParameter
 
 MATERIAL_IDX = ParameterSchema(
     name="material_index",
