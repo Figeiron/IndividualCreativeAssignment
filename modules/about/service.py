@@ -8,8 +8,8 @@ class AboutService(Service):
     def __init__(self, context):
         super().__init__(context)
 
-        self.register_command(GetAboutCreator.name, GetAboutCreator)
-        self.register_command(GetAboutProgram.name, GetAboutProgram)
+        self.register_command(GetAboutCreatorCommand.name, GetAboutCreatorCommand)
+        self.register_command(GetAboutProgramCommand.name, GetAboutProgramCommand)
 
     @staticmethod
     def get_about_creator():
