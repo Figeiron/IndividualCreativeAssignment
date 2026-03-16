@@ -16,7 +16,7 @@ class Command(ABC):
 
     @classmethod
     def get_params(cls, service):
-        pass
+        return []
 
     @abstractmethod
     def _execute(self, context):
