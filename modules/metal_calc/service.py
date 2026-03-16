@@ -21,6 +21,9 @@ class MetalCalcService(Service):
             result += f"{i + 1}. {material.name}: {material.price_per_m2} грн/м2\n"
         return result.strip()
 
+    def get_materials_count(self):
+        return len(self.materials)
+
     def calculate_pipe_unfolding(self, diameter_mm: float, length_mm: float, material_index: int):
         material = self.materials[material_index]
         pipe = Pipe(diameter_mm=diameter_mm, material=material, length_mm=length_mm)
