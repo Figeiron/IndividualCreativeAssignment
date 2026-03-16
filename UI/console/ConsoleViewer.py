@@ -1,4 +1,5 @@
 from core.events import Event, EventType
+from core.parameter import Parameter
 import winsound
 
 
@@ -48,9 +49,14 @@ class ConsoleViewer:
             self.pick_command(event.data["service_name"])
 
         if event.type == EventType.EXECUTE_COMMAND:
-            command_cls = self.commands[event.data["command_name"]]["command_cls"]
-            service_cls = self.services[event.data["service_name"]]
-            print(self.execute_command(command_cls, service_cls))
+            command_name = event.data["command_name"]
+            command_cls = self.commands[command_name]["command_cls"]
+            service = self.services[event.data["service_name"]]
+            self.execute_command(command_cls, service, command_name)
+
+        if event.type == EventType.COMMAND_EXECUTED:
+            self.print_banner(event.data["result"])
+
 
         if event.type == EventType.EXIT:
             self.running = False
@@ -69,7 +75,8 @@ class ConsoleViewer:
             j = 0
             if rows_width[i] % 2 == 0:
                 j = 1
-            print(f"║{" " * int((max_width - rows_width[i] + j) / 2)}{row}{" " * int((max_width - rows_width[i]) / 2)}║")
+            print(
+                f"║{" " * int((max_width - rows_width[i] + j) / 2)}{row}{" " * int((max_width - rows_width[i]) / 2)}║")
         print("╚" + "═" * max_width + "╝")
 
     def show_service_menu(self):
@@ -128,21 +135,21 @@ class ConsoleViewer:
             except (ValueError, IndexError):
                 print("Невірний вибір. Спробуйте ще раз.")
 
-    def execute_command(self, command_cls, service):
+    def execute_command(self, command_cls, service, command_name):
         if hasattr(command_cls, "description"):
             print(f"\nКоманда: {command_cls.description}")
 
         params = []
-        if hasattr(command_cls, "expected_params"):
-            for param in command_cls.expected_params:
-                while True:
-                    try:
-                        value = input(f"Введіть {param}: ")
-                        params.append(value)
-                        break
-                    except ValueError:
-                        print("Невірне значення, спробуйте ще раз.")
+        expected_params = service.get_command_params(command_name)
+        for param in expected_params:
+            while True:
+                try:
+                    value = input(f"Введіть {param.display_name} ({param.description}): ")
+                    typed_value = param.convert(value)
+                    params.append(typed_value)
+                    break
+                except ValueError as e:
+                    print(f"Помилка: {e}. Спробуйте ще раз.")
 
         cmd_instance = command_cls(service, *params)
-        result = cmd_instance.execute(self.context)
-        return result
+        self.context.events.emit(Event(EventType.RUN_COMMAND, command=cmd_instance))

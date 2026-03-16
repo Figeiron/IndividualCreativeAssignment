@@ -9,6 +9,9 @@ class Application:
         self.running = False
 
     def handle_event(self, event):
+        if event.type == EventType.RUN_COMMAND:
+            self.run_command(event.data["command"])
+
         if event.type == EventType.EXIT:
             self.running = False
 
