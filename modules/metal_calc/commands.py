@@ -1,5 +1,5 @@
 from core.command import Command
-from core.parameter import Parameter, RangeValidator, IndexParameter
+from modules.metal_calc.schemas.parameters import *
 from abc import ABC
 
 
@@ -7,9 +7,8 @@ class CalculateMetalCommand(Command, ABC):
     @classmethod
     def get_params(cls, service):
         materials_count = service.get_materials_count()
-        return super().get_params(service) + [
-            IndexParameter("material_index", "Матеріал", f"від 1 до {materials_count}", int,
-                           validators=[RangeValidator(1, materials_count)]),
+        return [
+            MATERIAL_IDX.with_range(1, materials_count).build(custom_desc=f"від 1 до {materials_count}")
         ]
 
     def __init__(self, service, material_index):
@@ -21,7 +20,7 @@ class CalculateMetalRoundCommand(CalculateMetalCommand, ABC):
     @classmethod
     def get_params(cls, service):
         return super().get_params(service) + [
-            Parameter("diameter", "Діаметр", "Діаметр труби в мм", float, validators=[RangeValidator(min_val=1)]),
+            DIAMETER.with_range(min_val=1).build()
         ]
 
     def __init__(self, service, material_index, diameter):
@@ -47,7 +46,7 @@ class CalculatePipeCommand(CalculateMetalRoundCommand):
     @classmethod
     def get_params(cls, service):
         return super().get_params(service) + [
-            Parameter("length", "Довжина", "Довжина труби в мм", float, validators=[RangeValidator(min_val=1)])
+            LENGTH.with_range(min_val=1).build()
         ]
 
     def __init__(self, service, material_index, diameter, length):
@@ -65,8 +64,8 @@ class CalculateElbowCommand(CalculateMetalRoundCommand):
     @classmethod
     def get_params(cls, service):
         return super().get_params(service) + [
-            Parameter("angle", "Кут", "Кут коліна в градусах", float, validators=[RangeValidator(0, 360)]),
-            Parameter("segments", "Сегменти", "Кількість сегментів", int, validators=[RangeValidator(min_val=1)])
+            ANGLE.with_range(0, 360).build(),
+            SEGMENTS.with_range(min_val=1).build()
         ]
 
     def __init__(self, service, material_index, diameter, angle, segments):

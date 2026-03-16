@@ -1,5 +1,5 @@
 from abc import ABC
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Callable, List, Optional
 
 from core.errors import ValidationError
@@ -55,3 +55,31 @@ class IndexParameter(Parameter):
     def convert(self, value: str) -> int:
         converted_value = super().convert(value)
         return converted_value - 1
+
+
+@dataclass(frozen=True)
+class ParameterSchema:
+    name: str
+    display_name: str
+    description: str = ""
+    parse_type: Any = str
+    parameter_cls: Any = Parameter
+    validators: List[Validator] = field(default_factory=list)
+
+    def with_range(self, min_val: Optional[Any] = None, max_val: Optional[Any] = None):
+        new_validators = list(self.validators)
+        new_validators.append(RangeValidator(min_val=min_val, max_val=max_val))
+        return replace(self, validators=new_validators)
+
+    def build(self, custom_desc: Optional[str] = None, extra_validators: Optional[List[Validator]] = None) -> Parameter:
+        all_validators = list(self.validators)
+        if extra_validators:
+            all_validators.extend(extra_validators)
+            
+        return self.parameter_cls(
+            name=self.name,
+            display_name=self.display_name,
+            description=custom_desc or self.description,
+            parse=self.parse_type,
+            validators=all_validators
+        )
