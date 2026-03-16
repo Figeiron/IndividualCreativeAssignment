@@ -2,7 +2,7 @@ import unittest
 from app.context import AppContext
 from core.events import EventDispatcher
 from modules.about.service import AboutService
-from modules.about.commands import GetAboutCreator, GetAboutProgram
+from modules.about.commands import GetAboutCreatorCommand, GetAboutProgramCommand
 
 class TestAboutModule(unittest.TestCase):
     def setUp(self):
@@ -20,12 +20,12 @@ class TestAboutModule(unittest.TestCase):
         self.assertIn("Програма помічник", result)
 
     def test_get_about_creator_command(self):
-        command = GetAboutCreator(self.service)
+        command = GetAboutCreatorCommand(self.service)
         result = command.execute(self.context)
         self.assertIn("Кручківський Юрій Олександрович", result)
 
     def test_get_about_program_command(self):
-        command = GetAboutProgram(self.service)
+        command = GetAboutProgramCommand(self.service)
         result = command.execute(self.context)
         self.assertIn("ПРОГРАМА", result)
 

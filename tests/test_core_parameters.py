@@ -1,5 +1,5 @@
 import unittest
-from core.parameter import Parameter, RangeValidator
+from core.parameter import Parameter, RangeValidator, BoolParameter
 from core.errors import ValidationError
 
 class TestParameters(unittest.TestCase):
@@ -9,7 +9,7 @@ class TestParameters(unittest.TestCase):
         self.assertIsInstance(param.convert("25"), int)
 
     def test_parameter_bool_conversion(self):
-        param = Parameter(name="active", display_name="Активний", parse=bool)
+        param = BoolParameter(name="active", display_name="Активний")
         self.assertTrue(param.convert("true"))
         self.assertTrue(param.convert("yes"))
         self.assertTrue(param.convert("1"))
@@ -32,11 +32,11 @@ class TestParameters(unittest.TestCase):
         
         with self.assertRaises(ValidationError) as cm:
             validator(0)
-        self.assertEqual(str(cm.exception), "Значення повинно бути більше 1")
+        self.assertEqual(str(cm.exception), "Value must be greater than 1")
         
         with self.assertRaises(ValidationError) as cm:
             validator(11)
-        self.assertEqual(str(cm.exception), "Значення повинно бути менше 10")
+        self.assertEqual(str(cm.exception), "Value must be less than 10")
 
     def test_parameter_with_validators(self):
         param = Parameter(
@@ -49,7 +49,7 @@ class TestParameters(unittest.TestCase):
         
         with self.assertRaises(ValueError) as cm:
             param.convert("-5")
-        self.assertIn("Значення повинно бути більше 0", str(cm.exception))
+        self.assertIn("Value must be greater than 0", str(cm.exception))
 
 if __name__ == '__main__':
     unittest.main()
