@@ -1,5 +1,6 @@
 import tkinter as tk
 from core.events import Event, EventType
+from core.parameter import ChoiceParameter
 
 
 class TkinterViewer:
@@ -68,7 +69,6 @@ class TkinterViewer:
 
         elif event.type == EventType.EXIT:
             self.root.destroy()
-
 
     def clear_sidebar(self):
         for widget in self.sidebar.winfo_children():
@@ -157,17 +157,18 @@ class TkinterViewer:
                 tk.Checkbutton(param_frame, variable=var, bg="white").pack(side=tk.LEFT)
 
             elif param.parse in (int, float):
-                if param.name == "diameter": 
+                if isinstance(param, ChoiceParameter):
                     val_var = tk.DoubleVar(value=0.0) if param.parse == float else tk.IntVar(value=0)
                     self.current_params_values[param.name] = val_var
-                    values = (100, 125, 150, 200, 250, 315)
+                    values = param.choices
                     for value in values:
                         tk.Radiobutton(param_frame, text=value, value=value, variable=val_var).pack(side=tk.LEFT)
                 else:
                     val_var = tk.DoubleVar(value=0.0) if param.parse == float else tk.IntVar(value=0)
                     self.current_params_values[param.name] = val_var
 
-                    tk.Button(param_frame, text="-100", command=lambda v=val_var: v.set(v.get() - 100)).pack(side=tk.LEFT)
+                    tk.Button(param_frame, text="-100", command=lambda v=val_var: v.set(v.get() - 100)).pack(
+                        side=tk.LEFT)
                     tk.Button(param_frame, text="-10", command=lambda v=val_var: v.set(v.get() - 10)).pack(side=tk.LEFT)
                     tk.Button(param_frame, text="-1", command=lambda v=val_var: v.set(v.get() - 1)).pack(side=tk.LEFT)
 
@@ -176,7 +177,8 @@ class TkinterViewer:
 
                     tk.Button(param_frame, text="+1", command=lambda v=val_var: v.set(v.get() + 1)).pack(side=tk.LEFT)
                     tk.Button(param_frame, text="+10", command=lambda v=val_var: v.set(v.get() + 10)).pack(side=tk.LEFT)
-                    tk.Button(param_frame, text="+100", command=lambda v=val_var: v.set(v.get() + 100)).pack(side=tk.LEFT)
+                    tk.Button(param_frame, text="+100", command=lambda v=val_var: v.set(v.get() + 100)).pack(
+                        side=tk.LEFT)
 
             error_label = tk.Label(param_container, text="", fg="red", bg="white", font=("Arial", 8))
             error_label.pack(anchor="w", padx=(145, 0))

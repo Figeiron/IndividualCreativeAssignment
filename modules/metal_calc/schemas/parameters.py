@@ -1,4 +1,4 @@
-from core.parameter import ParameterSchema, IndexParameter, BoolParameter
+from core.parameter import ParameterSchema, IndexParameter, BoolParameter, ChoiceParameter
 
 MATERIAL_IDX = ParameterSchema(
     name="material_index",
@@ -42,4 +42,12 @@ HAS_SALARY = ParameterSchema(
     description="Чи включається заробітня плата",
     parse_type=bool,
     parameter_cls=BoolParameter
+)
+
+CHOICE_DIAMETER = ParameterSchema(
+    name="diameter",
+    display_name="Діаметр",
+    description="Діаметр в мм",
+    parse_type=float,
+    parameter_cls=ChoiceParameter
 )

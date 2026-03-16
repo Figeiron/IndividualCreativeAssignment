@@ -7,6 +7,12 @@ from modules.metal_calc.models.products import Pipe, Elbow
 class MetalCalcService(Service):
     displayed_name = "Калькулятор тонколистового металу"
 
+    DEFAULT_DIAMETERS = (100.0, 125.0, 150.0, 200.0, 250.0, 315.0)
+
+    @classmethod
+    def get_default_diameters(cls):
+        return list(cls.DEFAULT_DIAMETERS)
+
     def __init__(self, context):
         super().__init__(context)
         self.materials = THIN_METALS
