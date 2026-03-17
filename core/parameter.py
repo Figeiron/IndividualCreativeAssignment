@@ -47,6 +47,9 @@ class Parameter:
     parse: type = str
     validators: List[Validator] = field(default_factory=list)
 
+    def to_ui(self):
+        return ParameterUIProxy(self)
+
     def _convert(self, value: str) -> Any:
         if self.parse == bool:
             raise TypeError("Must use BoolParameter for boolean values")
@@ -140,3 +143,23 @@ class ParameterSchema:
             return self.parameter_cls(**kwargs)
 
         return self.parameter_cls(**kwargs)
+
+
+@dataclass(frozen=True)
+class UIHint(ABC):
+    pass
+
+@dataclass(frozen=True)
+class RangeHint(UIHint):
+    min_value: Any
+    max_value: Any
+
+@dataclass(frozen=True)
+class ParameterUIProxy:
+    __parameter: Parameter
+    ui_hints: List[UIHint] = field(default_factory=list)
+
+    def __post_init__(self):
+        for validator in self.__parameter.validators:
+            if isinstance(validator, RangeValidator):
+                self.ui_hints.append(RangeHint(min_value=validator.min_val, max_value=validator.max_val))

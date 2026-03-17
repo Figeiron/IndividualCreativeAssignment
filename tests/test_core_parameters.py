@@ -1,6 +1,7 @@
 import unittest
-from core.parameter import Parameter, RangeValidator, BoolParameter
+from core.parameter import Parameter, RangeValidator, BoolParameter, ParameterSchema
 from core.errors import ValidationError
+
 
 class TestParameters(unittest.TestCase):
     def test_parameter_basic_conversion(self):
@@ -29,27 +30,37 @@ class TestParameters(unittest.TestCase):
         validator(5)
         validator(1)
         validator(10)
-        
+
         with self.assertRaises(ValidationError) as cm:
             validator(0)
         self.assertEqual(str(cm.exception), "Value must be greater than 1")
-        
+
         with self.assertRaises(ValidationError) as cm:
             validator(11)
         self.assertEqual(str(cm.exception), "Value must be less than 10")
 
     def test_parameter_with_validators(self):
         param = Parameter(
-            name="score", 
-            display_name="Рахунок", 
-            parse=int, 
+            name="score",
+            display_name="Рахунок",
+            parse=int,
             validators=[RangeValidator(min_val=0, max_val=100)]
         )
         self.assertEqual(param.convert("50"), 50)
-        
+
         with self.assertRaises(ValueError) as cm:
             param.convert("-5")
         self.assertIn("Value must be greater than 0", str(cm.exception))
+
+    def test_UI_parameter_proxy(self):
+        TEST_PARAM = ParameterSchema(
+            name="test",
+            display_name="Тест",
+            description="Тестовий параметр",
+            parse_type=int
+        )
+        print(TEST_PARAM.with_range(1,10).build().to_ui())
+
 
 if __name__ == '__main__':
     unittest.main()
