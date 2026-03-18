@@ -1,5 +1,7 @@
 import unittest
-from core.parameter import Parameter, RangeValidator, BoolParameter, ParameterSchema
+from core.parameter import Parameter, BoolParameter, ParameterSchema
+from UI.common.presentation.hint import OrderHint
+from core.validator import RangeValidator
 from core.errors import ValidationError
 
 
@@ -59,7 +61,7 @@ class TestParameters(unittest.TestCase):
             description="Тестовий параметр",
             parse_type=int
         )
-        print(TEST_PARAM.with_range(1,10).build().to_ui())
+        print(TEST_PARAM.with_range(1,10).with_hints(additional_hints=[OrderHint(1)]).build())
 
 
 if __name__ == '__main__':

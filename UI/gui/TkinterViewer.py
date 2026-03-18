@@ -1,6 +1,8 @@
 import tkinter as tk
 from core.events import Event, EventType
-from core.parameter import ChoiceParameter
+from UI.common.presentation.proxy import ParameterUIAssembler
+from UI.common.presentation.hint import RangeHint, ParseHint, OrderHint, UIHint
+from typing import List, Any
 
 
 class TkinterViewer:
@@ -125,15 +127,20 @@ class TkinterViewer:
         if hasattr(command_cls, "description"):
             tk.Label(self.main_area, text=command_cls.description, wraplength=600, bg="white").pack(pady=5)
 
-        params = []
-        if hasattr(command_cls, "get_params"):
-            params = command_cls.get_params(service)
-        elif hasattr(command_cls, "expected_params"):
-            params = command_cls.expected_params
+        assembler = ParameterUIAssembler(command_cls, service)
+        ui_params = assembler()
 
-        if not params:
+        if not ui_params:
             self.execute_with_params(command_cls, service, [])
             return
+
+        def get_order(p_proxy):
+            for hint in p_proxy.ui_hints:
+                if isinstance(hint, OrderHint):
+                    return hint.order_number
+            return 999
+
+        ui_params.sort(key=get_order)
 
         self.current_params_values = {}
         self.current_params_error_labels = {}
@@ -141,51 +148,79 @@ class TkinterViewer:
         form_frame = tk.Frame(self.main_area, bg="white")
         form_frame.pack(fill=tk.BOTH, expand=True, padx=20)
 
-        for param in params:
+        for param_proxy in ui_params:
             param_container = tk.Frame(form_frame, bg="white")
             param_container.pack(fill=tk.X, pady=2)
 
             param_frame = tk.Frame(param_container, bg="white")
             param_frame.pack(fill=tk.X)
 
-            tk.Label(param_frame, text=f"{param.display_name}:", width=20, anchor="w", bg="white").pack(side=tk.LEFT)
-            tk.Label(param_frame, text=f"{param.description}:", width=20, anchor="w", bg="white").pack(side=tk.RIGHT)
+            tk.Label(param_frame, text=f"{param_proxy.display_name}:", width=20, anchor="w", bg="white").pack(
+                side=tk.LEFT)
+            tk.Label(param_frame, text=f"{param_proxy.description}:", width=20, anchor="w", bg="white").pack(
+                side=tk.RIGHT)
 
-            if param.parse == bool:
+
+            parse_type = str
+            for hint in param_proxy.ui_hints:
+                if isinstance(hint, ParseHint):
+                    parse_type = hint.parse
+
+            if parse_type == bool:
                 var = tk.BooleanVar(value=False)
-                self.current_params_values[param.name] = var
+                self.current_params_values[param_proxy.name] = var
                 tk.Checkbutton(param_frame, variable=var, bg="white").pack(side=tk.LEFT)
 
-            elif param.parse in (int, float):
-                if isinstance(param, ChoiceParameter):
-                    val_var = tk.DoubleVar(value=0.0) if param.parse == float else tk.IntVar(value=0)
-                    self.current_params_values[param.name] = val_var
-                    values = param.choices
-                    for value in values:
+            elif parse_type in (int, float):
+                choices = []
+                range_hint = None
+                for hint in param_proxy.ui_hints:
+                    if hasattr(hint, 'choices'):
+                        choices = hint.choices
+                    if isinstance(hint, RangeHint):
+                        range_hint = hint
+
+                if choices:
+                    val_var = tk.DoubleVar(value=0.0) if parse_type == float else tk.IntVar(value=0)
+                    self.current_params_values[param_proxy.name] = val_var
+                    for value in choices:
                         tk.Radiobutton(param_frame, text=value, value=value, variable=val_var).pack(side=tk.LEFT)
                 else:
-                    val_var = tk.DoubleVar(value=0.0) if param.parse == float else tk.IntVar(value=0)
-                    self.current_params_values[param.name] = val_var
+                    val_var = tk.DoubleVar(value=0.0) if parse_type == float else tk.IntVar(value=0)
+                    self.current_params_values[param_proxy.name] = val_var
 
-                    tk.Button(param_frame, text="-100", command=lambda v=val_var: v.set(v.get() - 100)).pack(
-                        side=tk.LEFT)
-                    tk.Button(param_frame, text="-10", command=lambda v=val_var: v.set(v.get() - 10)).pack(side=tk.LEFT)
-                    tk.Button(param_frame, text="-1", command=lambda v=val_var: v.set(v.get() - 1)).pack(side=tk.LEFT)
+                    def update_val(v, delta, rh):
+                        new_val = v.get() + delta
+                        if rh:
+                            if rh.min_value is not None and new_val < rh.min_value:
+                                new_val = rh.min_value
+                            if rh.max_value is not None and new_val > rh.max_value:
+                                new_val = rh.max_value
+                        v.set(new_val)
+
+                    tk.Button(param_frame, text="-100",
+                              command=lambda v=val_var, rh=range_hint: update_val(v, -100, rh)).pack(side=tk.LEFT)
+                    tk.Button(param_frame, text="-10",
+                              command=lambda v=val_var, rh=range_hint: update_val(v, -10, rh)).pack(side=tk.LEFT)
+                    tk.Button(param_frame, text="-1",
+                              command=lambda v=val_var, rh=range_hint: update_val(v, -1, rh)).pack(side=tk.LEFT)
 
                     label = tk.Label(param_frame, textvariable=val_var, width=10, relief="sunken")
                     label.pack(side=tk.LEFT, padx=5)
 
-                    tk.Button(param_frame, text="+1", command=lambda v=val_var: v.set(v.get() + 1)).pack(side=tk.LEFT)
-                    tk.Button(param_frame, text="+10", command=lambda v=val_var: v.set(v.get() + 10)).pack(side=tk.LEFT)
-                    tk.Button(param_frame, text="+100", command=lambda v=val_var: v.set(v.get() + 100)).pack(
-                        side=tk.LEFT)
+                    tk.Button(param_frame, text="+1",
+                              command=lambda v=val_var, rh=range_hint: update_val(v, 1, rh)).pack(side=tk.LEFT)
+                    tk.Button(param_frame, text="+10",
+                              command=lambda v=val_var, rh=range_hint: update_val(v, 10, rh)).pack(side=tk.LEFT)
+                    tk.Button(param_frame, text="+100",
+                              command=lambda v=val_var, rh=range_hint: update_val(v, 100, rh)).pack(side=tk.LEFT)
 
             error_label = tk.Label(param_container, text="", fg="red", bg="white", font=("Arial", 8))
             error_label.pack(anchor="w", padx=(145, 0))
-            self.current_params_error_labels[param.name] = error_label
+            self.current_params_error_labels[param_proxy.name] = error_label
 
         tk.Button(self.main_area, text="Виконати", bg="#99ff99", height=2, width=30,
-                  command=lambda: self.collect_and_execute(command_cls, service, params)).pack(pady=20)
+                  command=lambda: self.collect_and_execute(command_cls, service, ui_params)).pack(pady=20)
         tk.Button(self.main_area, text="Скасувати", command=self.clear_main_area).pack()
 
     def collect_and_execute(self, command_cls, service, params_meta):
