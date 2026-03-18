@@ -1,10 +1,10 @@
-from abc import ABC
 from dataclasses import dataclass, field, replace
 from typing import Any, Callable, List, Optional
 
+from UI.common.presentation.hint import UIHint
 from core.errors import ValidationError, ChoiceError
 from core.validator import Validator, RangeValidator, ChoiceValidator
-from core.presentation.proxy import ParameterUIProxy
+
 
 @dataclass(frozen=True)
 class Parameter:
@@ -13,9 +13,7 @@ class Parameter:
     description: str = ""
     parse: type = str
     validators: List[Validator] = field(default_factory=list)
-
-    def to_ui(self):
-        return ParameterUIProxy(self)
+    hints: list[UIHint] = field(default_factory=list)
 
     def _convert(self, value: str) -> Any:
         if self.parse == bool:
@@ -77,6 +75,11 @@ class ParameterSchema:
     parameter_cls: Any = Parameter
     validators: List[Validator] = field(default_factory=list)
     choices: list = field(default_factory=list)
+    hints: list = field(default_factory=list)
+
+    def with_hints(self, additional_hints: List[UIHint]):
+        custom_hints = additional_hints if additional_hints else []
+        return replace(self, hints=custom_hints)
 
     def with_range(self, min_val: Optional[Any] = None, max_val: Optional[Any] = None):
         new_validators = list(self.validators)
@@ -99,7 +102,8 @@ class ParameterSchema:
             "display_name": self.display_name,
             "description": custom_desc or self.description,
             "parse": self.parse_type,
-            "validators": all_validators
+            "validators": all_validators,
+            "hints": self.hints
         }
 
         if issubclass(self.parameter_cls, ChoiceParameter):
@@ -110,4 +114,3 @@ class ParameterSchema:
             return self.parameter_cls(**kwargs)
 
         return self.parameter_cls(**kwargs)
-
