@@ -67,6 +67,28 @@ class ChoiceParameter(Parameter):
 
 
 @dataclass(frozen=True)
+class MappedChoiceParameter(ChoiceParameter):
+    @property
+    def labels(self):
+        return [c[0] for c in self.choices]
+
+    @property
+    def mapping(self):
+        return {c[0]: c[1] for c in self.choices}
+
+    def __post_init__(self):
+        if self.choices:
+            self.validators.append(ChoiceValidator(choice_parse_type=str, choices=self.labels))
+
+    def _convert(self, value: str):
+        label = str(value)
+        if label not in self.mapping:
+            raise ValidationError(f"Invalid choice '{label}'")
+        
+        return self.mapping[label]
+
+
+@dataclass(frozen=True)
 class ParameterSchema:
     name: str
     display_name: str
@@ -89,6 +111,12 @@ class ParameterSchema:
     def with_choices(self, choices: list):
         if not issubclass(self.parameter_cls, ChoiceParameter):
             raise ChoiceError("Must use ChoiceParameter for working with choice lists")
+
+        return replace(self, choices=choices)
+
+    def with_mapped_choices(self, choices: list):
+        if not issubclass(self.parameter_cls, MappedChoiceParameter):
+            raise ChoiceError("Must use MappedChoiceParameter for working with mapped choice lists")
 
         return replace(self, choices=choices)
 

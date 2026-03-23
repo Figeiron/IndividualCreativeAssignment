@@ -30,6 +30,9 @@ class MetalCalcService(Service):
     def get_materials_count(self):
         return len(self.materials)
 
+    def get_materials_mapped(self):
+        return [(m.name, m.id) for m in self.materials]
+
     def get_material_by_id(self, idx):
         for material in self.materials:
             if material.id == idx:

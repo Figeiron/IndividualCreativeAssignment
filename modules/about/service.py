@@ -10,6 +10,7 @@ class AboutService(Service):
 
         self.register_command(GetAboutCreatorCommand.name, GetAboutCreatorCommand)
         self.register_command(GetAboutProgramCommand.name, GetAboutProgramCommand)
+        self.register_command(SendFeedbackCommand.name, SendFeedbackCommand)
 
     @staticmethod
     def get_about_creator():
@@ -31,5 +32,11 @@ class AboutService(Service):
             "• Система глобальних подій та підписок.\n"
             "• Гнучке розширення функціоналу без зміни ядра.\n"
             "• Відстеження ланцюжків подій.\n"
+            "\n"
+            "Ви можете залишити відгук у відповідній команді меню."
         )
         return about_program_text
+
+    def send_feedback(self, text):
+        print(f"Отримано відгук: {text}")
+        return "Дякуємо за ваш відгук! Ми його обов'язково розглянемо."

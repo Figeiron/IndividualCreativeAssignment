@@ -1,5 +1,5 @@
 import unittest
-from core.parameter import Parameter, BoolParameter, ParameterSchema
+from core.parameter import Parameter, BoolParameter, ParameterSchema, MappedChoiceParameter
 from UI.common.presentation.hint import OrderHint
 from core.validator import RangeValidator
 from core.errors import ValidationError
@@ -62,6 +62,20 @@ class TestParameters(unittest.TestCase):
             parse_type=int
         )
         print(TEST_PARAM.with_range(1,10).with_hints(additional_hints=[OrderHint(1)]).build())
+
+    def test_mapped_choice_parameter(self):
+        choices = [("Label A", 100), ("Label B", 200)]
+        param = MappedChoiceParameter(
+            name="test",
+            display_name="Тест",
+            parse=str,
+            choices=choices
+        )
+        self.assertEqual(param.convert("Label A"), 100)
+        self.assertEqual(param.convert("Label B"), 200)
+
+        with self.assertRaises(ValueError):
+            param.convert("Invalid Label")
 
 
 if __name__ == '__main__':

@@ -6,10 +6,10 @@ from abc import ABC
 class CalculateMetalCommand(Command, ABC):
     @classmethod
     def get_params(cls, service):
-        materials_count = service.get_materials_count()
+        materials = service.get_materials_mapped()
         return [
             HAS_SALARY.build(),
-            MATERIAL_IDX.with_range(1, materials_count).build(custom_desc=f"від 1 до {materials_count}")
+            MATERIAL_IDX.with_mapped_choices(materials).build()
         ]
 
     def __init__(self, service, has_salary, material_index):
@@ -21,10 +21,9 @@ class CalculateMetalCommand(Command, ABC):
 class CalculateMetalRoundCommand(CalculateMetalCommand, ABC):
     @classmethod
     def get_params(cls, service):
-        diameters = service.get_default_diameters()
 
         return super().get_params(service) + [
-            CHOICE_DIAMETER.with_range(min_val=1).with_choices(choices=diameters).build()
+            DIAMETER.with_range(min_val=1).build()
         ]
 
     def __init__(self, service, has_salary, material_index, diameter):

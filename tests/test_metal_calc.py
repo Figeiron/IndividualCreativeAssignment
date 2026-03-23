@@ -33,7 +33,7 @@ class TestMetalCalcModule(unittest.TestCase):
     def test_calculate_pipe_command(self):
         # User enters 1 for the first material
         command = CalculatePipeCommand(self.service, False, 0, 100.0, 1000.0)
-        result = command.execute(self.context)
+        result = command._execute(self.context)
         self.assertIn("Розгортка: 314.16 x 1000.0 мм", result)
         self.assertIn("Вартість: 141.37 грн", result)
 
@@ -49,7 +49,7 @@ class TestMetalCalcModule(unittest.TestCase):
 
     def test_get_materials_command(self):
         command = GetMaterialsCommand(self.service)
-        result = command.execute(self.context)
+        result = command._execute(self.context)
         self.assertIn("Сталь (S235) 1мм", result)
 
 if __name__ == "__main__":

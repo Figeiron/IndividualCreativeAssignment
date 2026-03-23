@@ -1,11 +1,11 @@
-from core.parameter import ParameterSchema, IndexParameter, BoolParameter, ChoiceParameter
+from core.parameter import ParameterSchema, IndexParameter, BoolParameter, ChoiceParameter, MappedChoiceParameter
 
 MATERIAL_IDX = ParameterSchema(
     name="material_index",
     display_name="Матеріал",
-    description="Вибір індексу матеріалу",
+    description="Вибір матеріалу зі списку",
     parse_type=int,
-    parameter_cls=IndexParameter
+    parameter_cls=MappedChoiceParameter
 )
 
 DIAMETER = ParameterSchema(

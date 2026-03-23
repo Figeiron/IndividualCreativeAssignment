@@ -10,12 +10,8 @@ class UIHint(ABC):
 
 @dataclass(frozen=True)
 class RangeHint(UIHint):
-    min_value: Union[int, float]
-    max_value: Union[int, float]
-
-@dataclass(frozen=True)
-class ParseHint(UIHint):
-    parse: type
+    min_value: Union[int, float, None] = None
+    max_value: Union[int, float, None] = None
 
 @dataclass(frozen=True)
 class OrderHint(UIHint):
@@ -24,3 +20,12 @@ class OrderHint(UIHint):
 @dataclass(frozen=True)
 class ChoiceHint(UIHint):
     choices: list
+
+@dataclass(frozen=True)
+class LargeTextHint(UIHint):
+    pass
+
+@dataclass(frozen=True)
+class ListboxHint(UIHint):
+    choices: list
+    height: int = 5

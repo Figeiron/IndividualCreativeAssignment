@@ -1,8 +1,7 @@
 import tkinter as tk
 from core.events import Event, EventType
 from UI.common.presentation.proxy import ParameterUIAssembler
-from UI.common.presentation.hint import RangeHint, ParseHint, OrderHint, UIHint
-from typing import List, Any
+from UI.common.presentation.hint import RangeHint, OrderHint, ChoiceHint, LargeTextHint, ListboxHint
 
 
 class TkinterViewer:
@@ -161,59 +160,121 @@ class TkinterViewer:
                 side=tk.RIGHT)
 
 
-            parse_type = str
+            parse_type = param_proxy.parse
+            
+            choices = []
+            range_hint = None
+            large_text = False
+            listbox_hint = None
+            mapped_choices = None
+            
             for hint in param_proxy.ui_hints:
-                if isinstance(hint, ParseHint):
-                    parse_type = hint.parse
+                if isinstance(hint, ChoiceHint):
+                    choices = hint.choices
+                elif isinstance(hint, RangeHint):
+                    range_hint = hint
+                elif isinstance(hint, LargeTextHint):
+                    large_text = True
+                elif isinstance(hint, ListboxHint):
+                    listbox_hint = hint
 
-            if parse_type == bool:
+            if large_text:
+                text_widget = tk.Text(param_frame, height=5, width=40)
+                text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
+                self.current_params_values[param_proxy.name] = text_widget
+
+            elif listbox_hint:
+                lb_frame = tk.Frame(param_frame)
+                lb_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+                scrollbar = tk.Scrollbar(lb_frame, orient=tk.VERTICAL)
+                listbox = tk.Listbox(lb_frame, height=listbox_hint.height, yscrollcommand=scrollbar.set)
+                scrollbar.config(command=listbox.yview)
+                scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+                listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+                for choice in listbox_hint.choices:
+                    listbox.insert(tk.END, choice)
+                self.current_params_values[param_proxy.name] = listbox
+
+            elif choices:
+                val_var = tk.StringVar(value=str(choices[0]))
+                self.current_params_values[param_proxy.name] = val_var
+                option_menu = tk.OptionMenu(param_frame, val_var, *choices)
+                option_menu.pack(side=tk.LEFT)
+
+            elif parse_type == bool:
                 var = tk.BooleanVar(value=False)
                 self.current_params_values[param_proxy.name] = var
                 tk.Checkbutton(param_frame, variable=var, bg="white").pack(side=tk.LEFT)
 
             elif parse_type in (int, float):
-                choices = []
-                range_hint = None
-                for hint in param_proxy.ui_hints:
-                    if hasattr(hint, 'choices'):
-                        choices = hint.choices
-                    if isinstance(hint, RangeHint):
-                        range_hint = hint
+                val_var = tk.StringVar(value="0")
+                self.current_params_values[param_proxy.name] = val_var
 
-                if choices:
-                    val_var = tk.DoubleVar(value=0.0) if parse_type == float else tk.IntVar(value=0)
-                    self.current_params_values[param_proxy.name] = val_var
-                    for value in choices:
-                        tk.Radiobutton(param_frame, text=value, value=value, variable=val_var).pack(side=tk.LEFT)
+                def validate_range(event, var=val_var, rh=range_hint, pt=parse_type):
+                    if rh is None:
+                        return
+                    try:
+                        val = pt(var.get())
+                        if rh.min_value is not None and val < rh.min_value:
+                            var.set(str(rh.min_value))
+                        elif rh.max_value is not None and val > rh.max_value:
+                            var.set(str(rh.max_value))
+                    except ValueError:
+                        if rh.min_value is not None:
+                            var.set(str(rh.min_value))
+                        elif rh.max_value is not None:
+                            var.set(str(rh.max_value))
+                        else:
+                            var.set("0")
+
+                if range_hint:
+                    def update_from_scale(val, var=val_var):
+                        var.set(str(val))
+
+                    if range_hint.min_value is not None and range_hint.max_value is not None:
+                        entry = tk.Entry(param_frame, textvariable=val_var, width=10)
+                        entry.bind("<FocusOut>", validate_range)
+                        entry.pack(side=tk.LEFT, padx=5)
+
+                        scale = tk.Scale(param_frame, from_=range_hint.min_value, to=range_hint.max_value,
+                                       orient=tk.HORIZONTAL, length=200, showvalue=0,
+                                       resolution=1 if parse_type == int else 0.1,
+                                       command=update_from_scale)
+                        scale.set(range_hint.min_value)
+                        scale.pack(side=tk.LEFT, padx=5)
+                        
+                        def sync_scale(*args, s=scale, v=val_var, pt=parse_type):
+                            try:
+                                val = pt(v.get())
+                                s.set(val)
+                            except (ValueError, tk.TclError):
+                                pass
+
+                        val_var.trace_add("write", sync_scale)
+                        val_var.set(str(range_hint.min_value))
+                        
+                    elif range_hint.min_value is not None:
+                        spin = tk.Spinbox(param_frame, from_=range_hint.min_value, to=999999,
+                                        increment=1 if parse_type == int else 0.1,
+                                        textvariable=val_var, width=10)
+                        spin.bind("<FocusOut>", validate_range)
+                        spin.pack(side=tk.LEFT, padx=5)
+                        val_var.set(str(range_hint.min_value))
+                    elif range_hint.max_value is not None:
+                        spin = tk.Spinbox(param_frame, from_=-999999, to=range_hint.max_value,
+                                        increment=1 if parse_type == int else 0.1,
+                                        textvariable=val_var, width=10)
+                        spin.bind("<FocusOut>", validate_range)
+                        spin.pack(side=tk.LEFT, padx=5)
+                        val_var.set(str(range_hint.max_value))
                 else:
-                    val_var = tk.DoubleVar(value=0.0) if parse_type == float else tk.IntVar(value=0)
-                    self.current_params_values[param_proxy.name] = val_var
+                    entry = tk.Entry(param_frame, textvariable=val_var, width=10)
+                    entry.pack(side=tk.LEFT, padx=5)
 
-                    def update_val(v, delta, rh):
-                        new_val = v.get() + delta
-                        if rh:
-                            if rh.min_value is not None and new_val < rh.min_value:
-                                new_val = rh.min_value
-                            if rh.max_value is not None and new_val > rh.max_value:
-                                new_val = rh.max_value
-                        v.set(new_val)
-
-                    tk.Button(param_frame, text="-100",
-                              command=lambda v=val_var, rh=range_hint: update_val(v, -100, rh)).pack(side=tk.LEFT)
-                    tk.Button(param_frame, text="-10",
-                              command=lambda v=val_var, rh=range_hint: update_val(v, -10, rh)).pack(side=tk.LEFT)
-                    tk.Button(param_frame, text="-1",
-                              command=lambda v=val_var, rh=range_hint: update_val(v, -1, rh)).pack(side=tk.LEFT)
-
-                    label = tk.Label(param_frame, textvariable=val_var, width=10, relief="sunken")
-                    label.pack(side=tk.LEFT, padx=5)
-
-                    tk.Button(param_frame, text="+1",
-                              command=lambda v=val_var, rh=range_hint: update_val(v, 1, rh)).pack(side=tk.LEFT)
-                    tk.Button(param_frame, text="+10",
-                              command=lambda v=val_var, rh=range_hint: update_val(v, 10, rh)).pack(side=tk.LEFT)
-                    tk.Button(param_frame, text="+100",
-                              command=lambda v=val_var, rh=range_hint: update_val(v, 100, rh)).pack(side=tk.LEFT)
+            else:
+                val_var = tk.StringVar()
+                self.current_params_values[param_proxy.name] = val_var
+                tk.Entry(param_frame, textvariable=val_var, width=30).pack(side=tk.LEFT)
 
             error_label = tk.Label(param_container, text="", fg="red", bg="white", font=("Arial", 8))
             error_label.pack(anchor="w", padx=(145, 0))
@@ -232,7 +293,18 @@ class TkinterViewer:
 
         for p in params_meta:
             try:
-                val = self.current_params_values[p.name].get()
+                widget_or_var = self.current_params_values[p.name]
+                if isinstance(widget_or_var, tk.Text):
+                    val = widget_or_var.get("1.0", tk.END).strip()
+                elif isinstance(widget_or_var, tk.Listbox):
+                    selection = widget_or_var.curselection()
+                    if selection:
+                        val = widget_or_var.get(selection[0])
+                    else:
+                        val = ""
+                else:
+                    val = widget_or_var.get()
+                
                 converted_val = p.convert(str(val))
                 args.append(converted_val)
             except (ValueError, tk.TclError) as e:

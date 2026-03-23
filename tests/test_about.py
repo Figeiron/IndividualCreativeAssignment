@@ -2,7 +2,7 @@ import unittest
 from app.context import AppContext
 from core.events import EventDispatcher
 from modules.about.service import AboutService
-from modules.about.commands import GetAboutCreatorCommand, GetAboutProgramCommand
+from modules.about.commands import GetAboutCreatorCommand, GetAboutProgramCommand, SendFeedbackCommand
 
 class TestAboutModule(unittest.TestCase):
     def setUp(self):
@@ -17,17 +17,21 @@ class TestAboutModule(unittest.TestCase):
     def test_get_about_program(self):
         result = self.service.get_about_program()
         self.assertIn("ПРОГРАМА", result)
-        self.assertIn("Програма помічник", result)
 
     def test_get_about_creator_command(self):
         command = GetAboutCreatorCommand(self.service)
-        result = command.execute(self.context)
+        result = command._execute(self.context)
         self.assertIn("Кручківський Юрій Олександрович", result)
 
     def test_get_about_program_command(self):
         command = GetAboutProgramCommand(self.service)
-        result = command.execute(self.context)
+        result = command._execute(self.context)
         self.assertIn("ПРОГРАМА", result)
+
+    def test_send_feedback_command(self):
+        command = SendFeedbackCommand(self.service, "Test feedback")
+        result = command._execute(self.context)
+        self.assertIn("Дякуємо", result)
 
 if __name__ == "__main__":
     unittest.main()

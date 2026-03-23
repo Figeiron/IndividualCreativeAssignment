@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 from typing import List
 
 from core.command import Command
-from core.parameter import Parameter
-from UI.common.presentation.hint import UIHint, ParseHint
+from core.parameter import Parameter, MappedChoiceParameter
+from UI.common.presentation.hint import UIHint, ChoiceHint
 from UI.common.presentation.mapper import HINT_LOOKUP
 from core.service import Service
 
@@ -25,25 +25,32 @@ class ParameterUIProxy:
     def description(self):
         return self.__parameter.description
 
+    @property
+    def parse(self):
+        return self.__parameter.parse
+
     def convert(self, value: str):
         return self.__parameter.convert(value)
 
     def __post_init__(self):
         hints = list(self.ui_hints)
         hints.extend(self.__get_validator_hints())
-        hints.append(self.__get_parse_hints())
+        hints.extend(self.__get_type_specific_hints())
         object.__setattr__(self, "ui_hints", hints)
-
-    def __get_parse_hints(self) -> UIHint:
-        return ParseHint(self.__parameter.parse)
 
     def __get_validator_hints(self) -> list[UIHint]:
         hints = []
         for validator in self.__parameter.validators:
-            factory = HINT_LOOKUP[type(validator)]
+            factory = HINT_LOOKUP.get(type(validator))
             if factory:
                 hints.append(factory(validator))
 
+        return hints
+
+    def __get_type_specific_hints(self) -> list[UIHint]:
+        hints = []
+        if isinstance(self.__parameter, MappedChoiceParameter):
+            hints.append(ChoiceHint(choices=self.__parameter.labels))
         return hints
 
 
