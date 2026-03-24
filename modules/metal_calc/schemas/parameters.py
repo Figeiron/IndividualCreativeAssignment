@@ -51,3 +51,24 @@ CHOICE_DIAMETER = ParameterSchema(
     parse_type=float,
     parameter_cls=ChoiceParameter
 )
+
+MATERIAL_NAME = ParameterSchema(
+    name="name",
+    display_name="Імя",
+    description="Імя матеріалу",
+    parse_type=str
+)
+
+MATERIAL_SALARY = ParameterSchema(
+    name="salary",
+    display_name="Заробітня плата",
+    description="Заробітня плата за м2 матеріалу",
+    parse_type=float
+)
+
+MATERIAL_PRICE = ParameterSchema(
+    name="price",
+    display_name="Ціна матеріалу",
+    description="Ціна за м2 матеріалу",
+    parse_type=float
+)
