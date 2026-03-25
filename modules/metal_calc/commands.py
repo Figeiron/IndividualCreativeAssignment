@@ -103,6 +103,7 @@ class AddMaterial(Command):
     def _execute(self, context):
         return self.service.add_material(name=self.name, salary_per_m2=self.salary, price_per_m2=self.price)
 
+
 class DeleteMaterial(Command):
     name = "Видалити матеріал"
     description = "Видалити матеріал"
@@ -120,3 +121,22 @@ class DeleteMaterial(Command):
 
     def _execute(self, context):
         return self.service.delete_material(material_idx=self.material_index)
+
+
+class AirFlowPlot(Command):
+    @classmethod
+    def get_params(cls, service):
+        return [
+            DIAMETER.with_range(min_val=1).build(),
+            SPEED.with_range(min_val=1).build(custom_name="speed_min" ,custom_desc="мінімальна швидкість в м/с"),
+            SPEED.with_range(min_val=1).build(custom_name="speed_max", custom_desc="максимальна швидкість в м/с")
+        ]
+
+    def __init__(self, service, diameter_mm, speed_min, speed_max):
+        self.service = service
+        self.diameter_mm = diameter_mm
+        self.speed_min = speed_min
+        self.speed_max = speed_max
+
+    def _execute(self, context):
+        return self.service.calculate_air_flow_plot(self.diameter_mm, self.speed_min, self.speed_max)

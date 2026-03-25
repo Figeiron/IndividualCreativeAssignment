@@ -1,4 +1,6 @@
+import math
 from core.service import Service
+from core.response import Response, TextBox, PlotBox
 from modules.metal_calc.commands import *
 from modules.metal_calc.providers.materials_provider import MaterialsProvider
 from modules.metal_calc.models.products import Pipe, Elbow
@@ -24,12 +26,13 @@ class MetalCalcService(Service):
         self.register_command(CalculateElbowCommand.name, CalculateElbowCommand)
         self.register_command(AddMaterial.name, AddMaterial)
         self.register_command(DeleteMaterial.name, DeleteMaterial)
+        self.register_command(AirFlowPlot.name, AirFlowPlot)
 
     def get_materials(self):
         result = "Доступні тонколистові метали (ціна за м2):\n"
         for material in sorted(self.materials, key=lambda x: x.id):
             result += f"{material.id + 1}. {material.name}: {material.price_per_m2} грн/м2\n"
-        return result.strip()
+        return Response(boxes=[TextBox(text=result.strip())])
 
     def get_materials_count(self):
         return len(self.materials)
@@ -57,6 +60,7 @@ class MetalCalcService(Service):
 
         self.materials_provider.save_materials(new_materials)
         self.update_materials()
+        return Response(boxes=[TextBox(text="Матеріал успішно додано.")])
 
     def delete_material(self, material_idx):
         if self.get_materials_count() <= 1:
@@ -67,6 +71,7 @@ class MetalCalcService(Service):
 
         self.materials_provider.save_materials(new_materials)
         self.update_materials()
+        return Response(boxes=[TextBox(text="Матеріал успішно видалено.")])
 
     def update_materials(self):
         self.materials = self.materials_provider.load_materials()
@@ -74,11 +79,32 @@ class MetalCalcService(Service):
     def calculate_pipe_unfolding(self, diameter_mm: float, length_mm: float, material_index: int, has_salary: bool):
         material = self.get_material_by_id(material_index)
         pipe = Pipe(diameter_mm=diameter_mm, material=material, length_mm=length_mm, has_salary=has_salary)
-        return str(pipe)
+        return Response(boxes=[TextBox(text=str(pipe))])
 
     def calculate_elbow_unfolding(self, diameter_mm: float, angle_deg: float, segments: int, material_index: int,
                                   has_salary: bool):
         material = self.get_material_by_id(material_index)
         elbow = Elbow(diameter_mm=diameter_mm, material=material, angle_deg=angle_deg, segments=segments,
                       has_salary=has_salary)
-        return str(elbow)
+        return Response(boxes=[TextBox(text=str(elbow))])
+
+    def calculate_air_flow_plot(self, diameter_mm: float, speed_min: float = 1, speed_max: float = 10):
+        print(speed_min)
+        print(speed_max)
+        step = 0.5
+        d = diameter_mm / 1000
+        area = math.pi * d ** 2 / 4
+
+        def calc_q(v, a):
+            return v * a * 3600
+
+        points = []
+
+        steps_count = int((speed_max - speed_min) / step)
+
+        for i in range(steps_count + 1):
+            v = speed_min + i * step
+            q = calc_q(v, area)
+            points.append((v, q))
+
+        return Response(boxes=[PlotBox(points)])

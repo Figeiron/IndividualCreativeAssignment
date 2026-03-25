@@ -1,5 +1,6 @@
 from core.events import Event, EventType
 from core.parameter import Parameter
+from core.response import Response, TextBox
 import winsound
 
 
@@ -55,7 +56,15 @@ class ConsoleViewer:
             self.execute_command(command_cls, service, command_name)
 
         if event.type == EventType.COMMAND_EXECUTED:
-            self.print_banner(event.data["result"])
+            result = event.data["result"]
+            if isinstance(result, Response):
+                for box in result.boxes:
+                    if isinstance(box, TextBox):
+                        self.print_banner(box.text)
+                    else:
+                        self.print_banner(f"[{type(box).__name__}]")
+            else:
+                self.print_banner(str(result))
 
 
         if event.type == EventType.EXIT:

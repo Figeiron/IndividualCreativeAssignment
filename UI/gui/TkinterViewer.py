@@ -1,5 +1,6 @@
 import tkinter as tk
 from core.events import Event, EventType
+from core.response import Response, TextBox, PlotBox
 from UI.common.presentation.proxy import ParameterUIAssembler
 from UI.common.presentation.hint import RangeHint, OrderHint, ChoiceHint, LargeTextHint, ListboxHint
 
@@ -63,7 +64,11 @@ class TkinterViewer:
             self.show_params_form(event.data["service_name"], event.data["command_name"])
 
         elif event.type == EventType.COMMAND_EXECUTED:
-            self.show_result("Результат", str(event.data["result"]))
+            result = event.data["result"]
+            if isinstance(result, Response):
+                self.show_response("Результат", result)
+            else:
+                self.show_result("Результат", str(result))
 
         elif event.type == EventType.ERROR:
             self.show_result("Помилка", str(event.data["error_message"]))
@@ -115,6 +120,66 @@ class TkinterViewer:
         tk.Label(self.main_area, text=message, font=("Arial", 12), bg=color, justify=tk.LEFT, wraplength=600).pack(
             padx=20, pady=10, fill=tk.BOTH, expand=True)
         tk.Button(self.main_area, text="Очистити", width=20, command=self.clear_main_area).pack(pady=20)
+
+    def show_response(self, title, response: Response, color="white"):
+        self.clear_main_area()
+        self.main_area.configure(bg=color)
+        tk.Label(self.main_area, text=title, font=("Arial", 16, "bold"), bg=color).pack(pady=10)
+
+        container = tk.Frame(self.main_area, bg=color)
+        container.pack(fill=tk.BOTH, expand=True, padx=20)
+
+        for box in response.boxes:
+            if isinstance(box, TextBox):
+                tk.Label(container, text=box.text, font=("Arial", 12), bg=color, justify=tk.LEFT, wraplength=600).pack(
+                    anchor="w", pady=5)
+            elif isinstance(box, PlotBox):
+                self._draw_plot(container, box.plot_points)
+
+        tk.Button(self.main_area, text="Очистити", width=20, command=self.clear_main_area).pack(pady=10)
+
+    def _draw_plot(self, parent, points):
+        if not points:
+            return
+
+        canvas_width = 600
+        canvas_height = 300
+        padding = 40
+
+        canvas = tk.Canvas(parent, width=canvas_width, height=canvas_height, bg="white", highlightthickness=1, highlightbackground="black")
+        canvas.pack(pady=10)
+
+        x_coords = [p[0] for p in points]
+        y_coords = [p[1] for p in points]
+        
+        min_x, max_x = min(x_coords), max(x_coords)
+        min_y, max_y = min(y_coords), max(y_coords)
+
+        range_x = max_x - min_x if max_x != min_x else 1
+        range_y = max_y - min_y if max_y != min_y else 1
+
+        def scale_x(x):
+            return padding + (x - min_x) * (canvas_width - 2 * padding) / range_x
+
+        def scale_y(y):
+            return canvas_height - (padding + (y - min_y) * (canvas_height - 2 * padding) / range_y)
+
+        canvas.create_line(padding, canvas_height - padding, canvas_width - padding, canvas_height - padding, arrow=tk.LAST) # X
+        canvas.create_line(padding, canvas_height - padding, padding, padding, arrow=tk.LAST) # Y
+
+        scaled_points = [(scale_x(x), scale_y(y)) for x, y in points]
+        
+        for i in range(len(scaled_points) - 1):
+            p1 = scaled_points[i]
+            p2 = scaled_points[i+1]
+            canvas.create_line(p1[0], p1[1], p2[0], p2[1], fill="blue", width=2)
+            canvas.create_oval(p1[0]-3, p1[1]-3, p1[0]+3, p1[1]+3, fill="red")
+        
+        last_p = scaled_points[-1]
+        canvas.create_oval(last_p[0]-3, last_p[1]-3, last_p[0]+3, last_p[1]+3, fill="red")
+
+        canvas.create_text(canvas_width - padding, canvas_height - padding + 15, text="X")
+        canvas.create_text(padding - 15, padding, text="Y")
 
     def show_params_form(self, service_name, command_name):
         self.clear_main_area()

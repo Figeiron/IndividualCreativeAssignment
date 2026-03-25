@@ -72,3 +72,10 @@ MATERIAL_PRICE = ParameterSchema(
     description="Ціна за м2 матеріалу",
     parse_type=float
 )
+
+SPEED = ParameterSchema(
+    name="speed",
+    display_name="Швидкість",
+    description="Швидкість в м/с",
+    parse_type=float
+)

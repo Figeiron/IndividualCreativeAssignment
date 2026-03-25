@@ -123,13 +123,13 @@ class ParameterSchema:
 
         return replace(self, choices=choices)
 
-    def build(self, custom_desc: Optional[str] = None, extra_validators: Optional[List[Validator]] = None) -> Parameter:
+    def build(self, custom_name: Optional[str] = None, custom_desc: Optional[str] = None, extra_validators: Optional[List[Validator]] = None) -> Parameter:
         all_validators = list(self.validators)
         if extra_validators:
             all_validators.extend(extra_validators)
 
         kwargs = {
-            "name": self.name,
+            "name": custom_name or self.name,
             "display_name": self.display_name,
             "description": custom_desc or self.description,
             "parse": self.parse_type,

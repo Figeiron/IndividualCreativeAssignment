@@ -1,4 +1,5 @@
 from core.service import Service
+from core.response import Response, TextBox
 from modules.about.commands import *
 
 
@@ -18,7 +19,7 @@ class AboutService(Service):
             "Розробив студент групи Б25_F3(A)\n"
             "Кручківський Юрій Олександрович\n"
         )
-        return about_creator_text
+        return Response(boxes=[TextBox(text=about_creator_text)])
 
     def get_about_program(self):
         about_program_text = (
@@ -35,8 +36,8 @@ class AboutService(Service):
             "\n"
             "Ви можете залишити відгук у відповідній команді меню."
         )
-        return about_program_text
+        return Response(boxes=[TextBox(text=about_program_text)])
 
     def send_feedback(self, text):
         print(f"Отримано відгук: {text}")
-        return "Дякуємо за ваш відгук! Ми його обов'язково розглянемо."
+        return Response(boxes=[TextBox(text="Дякуємо за ваш відгук! Ми його обов'язково розглянемо.")])
