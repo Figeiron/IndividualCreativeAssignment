@@ -144,21 +144,29 @@ class TkinterViewer:
         self.current_params_values = {}
         self.current_params_error_labels = {}
 
-        form_frame = tk.Frame(self.main_area, bg="white")
-        form_frame.pack(fill=tk.BOTH, expand=True, padx=20)
+        form_frame = tk.Frame(self.main_area, bg="#cccccc")
+        form_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
-        for param_proxy in ui_params:
-            param_container = tk.Frame(form_frame, bg="white")
-            param_container.pack(fill=tk.X, pady=2)
+        form_frame.columnconfigure(0, weight=0)
+        form_frame.columnconfigure(1, weight=1)
+        form_frame.columnconfigure(2, weight=0)
 
-            param_frame = tk.Frame(param_container, bg="white")
-            param_frame.pack(fill=tk.X)
+        # Header
+        tk.Label(form_frame, text="Параметр", font=("Arial", 10, "bold"), bg="#eeeeee", relief=tk.RIDGE, bd=1).grid(
+            row=0, column=0, sticky="nsew")
+        tk.Label(form_frame, text="Значення", font=("Arial", 10, "bold"), bg="#eeeeee", relief=tk.RIDGE, bd=1).grid(
+            row=0, column=1, sticky="nsew")
+        tk.Label(form_frame, text="Опис", font=("Arial", 10, "bold"), bg="#eeeeee", relief=tk.RIDGE, bd=1).grid(
+            row=0, column=2, sticky="nsew")
 
-            tk.Label(param_frame, text=f"{param_proxy.display_name}:", width=20, anchor="w", bg="white").pack(
-                side=tk.LEFT)
-            tk.Label(param_frame, text=f"{param_proxy.description}:", width=20, anchor="w", bg="white").pack(
-                side=tk.RIGHT)
+        for i, param_proxy in enumerate(ui_params):
+            row_index = (i + 1) * 2 - 1
 
+            tk.Label(form_frame, text=f"{param_proxy.display_name}:", width=25, anchor="w", bg="white", relief=tk.RIDGE, bd=1).grid(
+                row=row_index, column=0, sticky="nsew", rowspan=2)
+            
+            tk.Label(form_frame, text=f"{param_proxy.description}", width=25, anchor="w", bg="white", relief=tk.RIDGE, bd=1, wraplength=200).grid(
+                row=row_index, column=2, sticky="nsew", rowspan=2)
 
             parse_type = param_proxy.parse
             
@@ -166,7 +174,6 @@ class TkinterViewer:
             range_hint = None
             large_text = False
             listbox_hint = None
-            mapped_choices = None
             
             for hint in param_proxy.ui_hints:
                 if isinstance(hint, ChoiceHint):
@@ -178,14 +185,17 @@ class TkinterViewer:
                 elif isinstance(hint, ListboxHint):
                     listbox_hint = hint
 
+            widget_container = tk.Frame(form_frame, bg="white", relief=tk.RIDGE, bd=1)
+            widget_container.grid(row=row_index, column=1, sticky="nsew")
+
             if large_text:
-                text_widget = tk.Text(param_frame, height=5, width=40)
-                text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
+                text_widget = tk.Text(widget_container, height=5, width=40)
+                text_widget.pack(fill=tk.X, expand=True)
                 self.current_params_values[param_proxy.name] = text_widget
 
             elif listbox_hint:
-                lb_frame = tk.Frame(param_frame)
-                lb_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+                lb_frame = tk.Frame(widget_container)
+                lb_frame.pack(fill=tk.X, expand=True)
                 scrollbar = tk.Scrollbar(lb_frame, orient=tk.VERTICAL)
                 listbox = tk.Listbox(lb_frame, height=listbox_hint.height, yscrollcommand=scrollbar.set)
                 scrollbar.config(command=listbox.yview)
@@ -198,13 +208,13 @@ class TkinterViewer:
             elif choices:
                 val_var = tk.StringVar(value=str(choices[0]))
                 self.current_params_values[param_proxy.name] = val_var
-                option_menu = tk.OptionMenu(param_frame, val_var, *choices)
+                option_menu = tk.OptionMenu(widget_container, val_var, *choices)
                 option_menu.pack(side=tk.LEFT)
 
             elif parse_type == bool:
                 var = tk.BooleanVar(value=False)
                 self.current_params_values[param_proxy.name] = var
-                tk.Checkbutton(param_frame, variable=var, bg="white").pack(side=tk.LEFT)
+                tk.Checkbutton(widget_container, variable=var, bg="white").pack(side=tk.LEFT)
 
             elif parse_type in (int, float):
                 val_var = tk.StringVar(value="0")
@@ -232,11 +242,11 @@ class TkinterViewer:
                         var.set(str(val))
 
                     if range_hint.min_value is not None and range_hint.max_value is not None:
-                        entry = tk.Entry(param_frame, textvariable=val_var, width=10)
+                        entry = tk.Entry(widget_container, textvariable=val_var, width=10)
                         entry.bind("<FocusOut>", validate_range)
                         entry.pack(side=tk.LEFT, padx=5)
 
-                        scale = tk.Scale(param_frame, from_=range_hint.min_value, to=range_hint.max_value,
+                        scale = tk.Scale(widget_container, from_=range_hint.min_value, to=range_hint.max_value,
                                        orient=tk.HORIZONTAL, length=200, showvalue=0,
                                        resolution=1 if parse_type == int else 0.1,
                                        command=update_from_scale)
@@ -254,35 +264,38 @@ class TkinterViewer:
                         val_var.set(str(range_hint.min_value))
                         
                     elif range_hint.min_value is not None:
-                        spin = tk.Spinbox(param_frame, from_=range_hint.min_value, to=999999,
+                        spin = tk.Spinbox(widget_container, from_=range_hint.min_value, to=999999,
                                         increment=1 if parse_type == int else 0.1,
                                         textvariable=val_var, width=10)
                         spin.bind("<FocusOut>", validate_range)
                         spin.pack(side=tk.LEFT, padx=5)
                         val_var.set(str(range_hint.min_value))
                     elif range_hint.max_value is not None:
-                        spin = tk.Spinbox(param_frame, from_=-999999, to=range_hint.max_value,
+                        spin = tk.Spinbox(widget_container, from_=-999999, to=range_hint.max_value,
                                         increment=1 if parse_type == int else 0.1,
                                         textvariable=val_var, width=10)
                         spin.bind("<FocusOut>", validate_range)
                         spin.pack(side=tk.LEFT, padx=5)
                         val_var.set(str(range_hint.max_value))
                 else:
-                    entry = tk.Entry(param_frame, textvariable=val_var, width=10)
+                    entry = tk.Entry(widget_container, textvariable=val_var, width=10)
                     entry.pack(side=tk.LEFT, padx=5)
 
             else:
                 val_var = tk.StringVar()
                 self.current_params_values[param_proxy.name] = val_var
-                tk.Entry(param_frame, textvariable=val_var, width=30).pack(side=tk.LEFT)
+                tk.Entry(widget_container, textvariable=val_var, width=30).pack(side=tk.LEFT)
 
-            error_label = tk.Label(param_container, text="", fg="red", bg="white", font=("Arial", 8))
-            error_label.pack(anchor="w", padx=(145, 0))
+            error_label = tk.Label(form_frame, text="", fg="red", bg="white", font=("Arial", 8), relief=tk.RIDGE, bd=1)
+            error_label.grid(row=row_index + 1, column=1, sticky="nsew")
             self.current_params_error_labels[param_proxy.name] = error_label
 
-        tk.Button(self.main_area, text="Виконати", bg="#99ff99", height=2, width=30,
-                  command=lambda: self.collect_and_execute(command_cls, service, ui_params)).pack(pady=20)
-        tk.Button(self.main_area, text="Скасувати", command=self.clear_main_area).pack()
+        button_container = tk.Frame(self.main_area, bg="white", height=100)
+        button_container.pack(fill=tk.X, side=tk.BOTTOM)
+        
+        tk.Button(button_container, text="Виконати", bg="#99ff99", height=2, width=30,
+                  command=lambda: self.collect_and_execute(command_cls, service, ui_params)).place(relx=0.5, rely=0.3, anchor=tk.CENTER)
+        tk.Button(button_container, text="Скасувати", command=self.clear_main_area).place(relx=0.5, rely=0.8, anchor=tk.CENTER)
 
     def collect_and_execute(self, command_cls, service, params_meta):
         args = []
