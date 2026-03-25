@@ -16,6 +16,9 @@ class Parameter:
     hints: list[UIHint] = field(default_factory=list)
 
     def _convert(self, value: str) -> Any:
+        if not value:
+            raise ValueError("Value must be not None")
+
         if self.parse == bool:
             raise TypeError("Must use BoolParameter for boolean values")
 
