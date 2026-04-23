@@ -11,6 +11,14 @@ class BaseBox(ABC):
 class TextBox(BaseBox):
     text: str
 
+@dataclass
+class TableCell:
+    pos: Tuple[int, int]
+    text: str
+
+@dataclass
+class TableBox(BaseBox):
+    cells: List[TableCell]    
 
 @dataclass
 class PlotBox(BaseBox):

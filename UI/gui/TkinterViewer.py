@@ -1,6 +1,6 @@
 import tkinter as tk
 from core.events import Event, EventType
-from core.response import Response, TextBox, PlotBox
+from core.response import Response, TextBox, PlotBox, TableBox
 from UI.common.presentation.proxy import ParameterUIAssembler
 from UI.common.presentation.hint import RangeHint, OrderHint, ChoiceHint, LargeTextHint, ListboxHint
 
@@ -133,10 +133,48 @@ class TkinterViewer:
             if isinstance(box, TextBox):
                 tk.Label(container, text=box.text, font=("Arial", 12), bg=color, justify=tk.LEFT, wraplength=600).pack(
                     anchor="w", pady=5)
+            
+            elif isinstance(box, TableBox):
+                self._draw_table(container, box.cells)
+            
             elif isinstance(box, PlotBox):
                 self._draw_plot(container, box.plot_points)
 
         tk.Button(self.main_area, text="Очистити", width=20, command=self.clear_main_area).pack(pady=10)
+
+    def _draw_table(self, parent, cells):
+        if not cells:
+            return
+
+        table_frame = tk.Frame(parent, bg="black")
+        table_frame.pack(pady=10, anchor="w")
+
+        max_row = max(cell.pos[0] for cell in cells)
+        max_col = max(cell.pos[1] for cell in cells)
+
+        grid = [[None for _ in range(max_col + 1)] for _ in range(max_row + 1)]
+
+        for cell in cells:
+            r, c = cell.pos
+            grid[r][c] = cell.text
+
+        for r in range(max_row + 1):
+            for c in range(max_col + 1):
+                text = grid[r][c] if grid[r][c] is not None else ""
+
+                label = tk.Label(
+                    table_frame,
+                    text=text,
+                    borderwidth=1,
+                    relief="solid",
+                    width=len(text),
+                    height=2,
+                    bg="white"
+                )
+                label.grid(row=r, column=c, sticky="nsew")
+
+        for c in range(max_col + 1):
+            table_frame.grid_columnconfigure(c, weight=1)
 
     def _draw_plot(self, parent, points):
         if not points:

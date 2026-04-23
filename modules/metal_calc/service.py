@@ -1,6 +1,6 @@
 import math
 from core.service import Service
-from core.response import Response, TextBox, PlotBox
+from core.response import Response, TextBox, PlotBox, TableBox, TableCell
 from modules.metal_calc.commands import *
 from modules.metal_calc.providers.materials_provider import MaterialsProvider
 from modules.metal_calc.models.products import Pipe, Elbow
@@ -79,6 +79,23 @@ class MetalCalcService(Service):
     def calculate_pipe_unfolding(self, diameter_mm: float, length_mm: float, material_index: int, has_salary: bool):
         material = self.get_material_by_id(material_index)
         pipe = Pipe(diameter_mm=diameter_mm, material=material, length_mm=length_mm, has_salary=has_salary)
+        return Response(boxes=[
+            TextBox(text="Труба"),
+            TableBox([
+                TableCell(pos=(0, 0), text="Параметер"),
+                TableCell(pos=(1, 0), text="Виріб:"),
+                TableCell(pos=(2, 0), text="Розгортка:"),
+                TableCell(pos=(3, 0), text="Матеріал:"),
+                TableCell(pos=(4, 0), text="Площа:"),
+                TableCell(pos=(5, 0), text="Вартість:"),
+                TableCell(pos=(0, 1), text="Значення"),
+                TableCell(pos=(1, 1), text=f"Труба (Діаметр: {pipe.diameter_mm} мм, Довжина: {pipe.length_mm} мм)"),
+                TableCell(pos=(2, 1), text=f"{pipe.get_width_mm():.2f} x {pipe.length_mm} мм"),
+                TableCell(pos=(3, 1), text=f"{pipe.material.name}"),
+                TableCell(pos=(4, 1), text=f"{pipe.get_area_m2():.3f} м2"),
+                TableCell(pos=(5, 1), text=f"{pipe.get_cost():.2f} грн")
+            ])
+        ])
         return Response(boxes=[TextBox(text=str(pipe))])
 
     def calculate_elbow_unfolding(self, diameter_mm: float, angle_deg: float, segments: int, material_index: int,
@@ -105,6 +122,10 @@ class MetalCalcService(Service):
         for i in range(steps_count + 1):
             v = speed_min + i * step
             q = calc_q(v, area)
-            points.append((v, q))
-
-        return Response(boxes=[PlotBox(points)])
+            points.append((round(v,2), round(q,2)))
+        
+        # points = [(x, abs(x**3) ) for x in range(int(speed_min), int(speed_max)+1)]
+        return Response(boxes=[
+            PlotBox(points),
+            TextBox("Точки"),
+            TableBox([TableCell((0, x), str(point)) for x, point in enumerate(points)])])
