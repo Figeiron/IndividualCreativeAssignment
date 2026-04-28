@@ -124,8 +124,9 @@ class MetalCalcService(Service):
             q = calc_q(v, area)
             points.append((round(v,2), round(q,2)))
         
-        # points = [(x, abs(x**3) ) for x in range(int(speed_min), int(speed_max)+1)]
+        test_points = [(x, abs(x**3) ) for x in range(int(speed_min), int(speed_max)+1)]
         return Response(boxes=[
             PlotBox(points),
             TextBox("Точки"),
-            TableBox([TableCell((0, x), str(point)) for x, point in enumerate(points)])])
+            TableBox([TableCell((0, x), str(point)) for x, point in enumerate(points)]),
+            PlotBox(test_points)])
