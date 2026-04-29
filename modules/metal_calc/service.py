@@ -96,7 +96,6 @@ class MetalCalcService(Service):
                 TableCell(pos=(5, 1), text=f"{pipe.get_cost():.2f} грн")
             ])
         ])
-        return Response(boxes=[TextBox(text=str(pipe))])
 
     def calculate_elbow_unfolding(self, diameter_mm: float, angle_deg: float, segments: int, material_index: int,
                                   has_salary: bool):
@@ -106,8 +105,6 @@ class MetalCalcService(Service):
         return Response(boxes=[TextBox(text=str(elbow))])
 
     def calculate_air_flow_plot(self, diameter_mm: float, speed_min: float = 1, speed_max: float = 10):
-        print(speed_min)
-        print(speed_max)
         step = 0.5
         d = diameter_mm / 1000
         area = math.pi * d ** 2 / 4
