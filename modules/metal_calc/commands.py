@@ -124,6 +124,8 @@ class DeleteMaterial(Command):
 
 
 class AirFlowPlot(Command):
+    name = "Побудувати графік потоку повітря"
+    description = "Побудувати графік потоку повітря"
     @classmethod
     def get_params(cls, service):
         return [
