@@ -28,8 +28,30 @@ class TkinterViewer:
 
         self.status.pack(fill=tk.X)
 
-        self.main_area = tk.Frame(self.root, bg="white")
-        self.main_area.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.main_container = tk.Frame(self.root, bg="white")
+        self.main_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        self.canvas = tk.Canvas(self.main_container, bg="white", highlightthickness=0)
+        self.v_scrollbar = tk.Scrollbar(self.main_container, orient=tk.VERTICAL, command=self.canvas.yview)
+        self.h_scrollbar = tk.Scrollbar(self.main_container, orient=tk.HORIZONTAL, command=self.canvas.xview)
+        self.main_area = tk.Frame(self.canvas, bg="white")
+
+        self.main_area.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(
+                scrollregion=self.canvas.bbox("all")
+            )
+        )
+
+        self.canvas.create_window((0, 0), window=self.main_area, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.v_scrollbar.set, xscrollcommand=self.h_scrollbar.set)
+
+        self.v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        self.main_area.bind("<Enter>", lambda _: self.canvas.bind_all("<MouseWheel>", self._on_mousewheel))
+        self.main_area.bind("<Leave>", lambda _: self.canvas.unbind_all("<MouseWheel>"))
 
         self.current_params_values = {}
         self.current_params_widgets = {}
@@ -83,6 +105,8 @@ class TkinterViewer:
     def clear_main_area(self):
         for widget in self.main_area.winfo_children():
             widget.destroy()
+        self.canvas.xview_moveto(0)
+        self.canvas.yview_moveto(0)
 
     def show_services_sidebar(self):
         self.clear_sidebar()
@@ -116,14 +140,16 @@ class TkinterViewer:
     def show_result(self, title, message, color="white"):
         self.clear_main_area()
         self.main_area.configure(bg=color)
+        self.canvas.configure(bg=color)
         tk.Label(self.main_area, text=title, font=("Arial", 16, "bold"), bg=color).pack(pady=20)
-        tk.Label(self.main_area, text=message, font=("Arial", 12), bg=color, justify=tk.LEFT, wraplength=600).pack(
+        tk.Label(self.main_area, text=message, font=("Arial", 12), bg=color, justify=tk.LEFT).pack(
             padx=20, pady=10, fill=tk.BOTH, expand=True)
         tk.Button(self.main_area, text="Очистити", width=20, command=self.clear_main_area).pack(pady=20)
 
     def show_response(self, title, response: Response, color="white"):
         self.clear_main_area()
         self.main_area.configure(bg=color)
+        self.canvas.configure(bg=color)
         tk.Label(self.main_area, text=title, font=("Arial", 16, "bold"), bg=color).pack(pady=10)
 
         container = tk.Frame(self.main_area, bg=color)
@@ -131,7 +157,7 @@ class TkinterViewer:
 
         for box in response.boxes:
             if isinstance(box, TextBox):
-                tk.Label(container, text=box.text, font=("Arial", 12), bg=color, justify=tk.LEFT, wraplength=600).pack(
+                tk.Label(container, text=box.text, font=("Arial", 12), bg=color, justify=tk.LEFT).pack(
                     anchor="w", pady=5)
             
             elif isinstance(box, TableBox):
@@ -222,12 +248,13 @@ class TkinterViewer:
     def show_params_form(self, service_name, command_name):
         self.clear_main_area()
         self.main_area.configure(bg="white")
+        self.canvas.configure(bg="white")
         service = self.services[service_name]
         command_cls = self.commands[command_name]["command_cls"]
 
         tk.Label(self.main_area, text=f"Команда: {command_name}", font=("Arial", 14, "bold"), bg="white").pack(pady=10)
         if hasattr(command_cls, "description"):
-            tk.Label(self.main_area, text=command_cls.description, wraplength=600, bg="white").pack(pady=5)
+            tk.Label(self.main_area, text=command_cls.description, bg="white").pack(pady=5)
 
         assembler = ParameterUIAssembler(command_cls, service)
         ui_params = assembler()
@@ -442,3 +469,6 @@ class TkinterViewer:
             self.root.update()
         except tk.TclError:
             pass
+
+    def _on_mousewheel(self, event):
+        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
