@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import filedialog
 from core.events import Event, EventType
 from core.response import Response, TextBox, PlotBox, TableBox
 from UI.common.presentation.proxy import ParameterUIAssembler
@@ -152,21 +153,64 @@ class TkinterViewer:
         self.canvas.configure(bg=color)
         tk.Label(self.main_area, text=title, font=("Arial", 16, "bold"), bg=color).pack(pady=10)
 
-        container = tk.Frame(self.main_area, bg=color)
-        container.pack(fill=tk.BOTH, expand=True, padx=20)
+        response_frame = tk.LabelFrame(self.main_area, text="Результат виконання", padx=10, pady=10, bg=color)
+        response_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
         for box in response.boxes:
             if isinstance(box, TextBox):
-                tk.Label(container, text=box.text, font=("Arial", 12), bg=color, justify=tk.LEFT).pack(
+                tk.Label(response_frame, text=box.text, font=("Arial", 12), bg=color, justify=tk.LEFT).pack(
                     anchor="w", pady=5)
             
             elif isinstance(box, TableBox):
-                self._draw_table(container, box.cells)
+                self._draw_table(response_frame, box.cells)
             
             elif isinstance(box, PlotBox):
-                self._draw_plot(container, box.plot_points)
+                self._draw_plot(response_frame, box.plot_points)
+
+        self._add_export_ui(self.main_area, response)
 
         tk.Button(self.main_area, text="Очистити", width=20, command=self.clear_main_area).pack(pady=10)
+
+    def _add_export_ui(self, parent, response):
+        exporters = self._get_exporters()
+        if not exporters:
+            return
+
+        export_frame = tk.LabelFrame(parent, text="Експорт результату", padx=10, pady=10, bg="white")
+        export_frame.pack(pady=10, fill=tk.X, padx=20)
+
+        tk.Label(export_frame, text="Оберіть експортер:", bg="white").pack(side=tk.LEFT, padx=5)
+
+        exporter_names = list(exporters.keys())
+        selected_exporter = tk.StringVar(value=exporter_names[0])
+        
+        option_menu = tk.OptionMenu(export_frame, selected_exporter, *exporter_names)
+        option_menu.pack(side=tk.LEFT, padx=5)
+
+        def do_export():
+            name = selected_exporter.get()
+            exporter = exporters[name]
+            self._export_clicked(exporter, response)
+
+        tk.Button(export_frame, text="Експортувати", command=do_export, bg="#ccffcc").pack(side=tk.LEFT, padx=10)
+
+    def _get_exporters(self):
+        return getattr(self.context, "exporters", {})
+
+    def _export_clicked(self, exporter, response):
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".xlsx",
+            filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")]
+        )
+        
+        if not file_path:
+            return
+
+        try:
+            res = exporter.export(file_path, response)
+            self.show_response("Результат експорту", res)
+        except Exception as e:
+            self.show_result("Помилка", f"Помилка при експорті: {e}")
 
     def _draw_table(self, parent, cells):
         if not cells:

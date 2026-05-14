@@ -102,7 +102,23 @@ class MetalCalcService(Service):
         material = self.get_material_by_id(material_index)
         elbow = Elbow(diameter_mm=diameter_mm, material=material, angle_deg=angle_deg, segments=segments,
                       has_salary=has_salary)
-        return Response(boxes=[TextBox(text=str(elbow))])
+        return Response(boxes=[
+            TextBox(text="Коліно"),
+            TableBox([
+                TableCell(pos=(0, 0), text="Параметер"),
+                TableCell(pos=(1, 0), text="Виріб:"),
+                TableCell(pos=(2, 0), text="Матеріал:"),
+                TableCell(pos=(3, 0), text="Приблизна площа:"),
+                TableCell(pos=(4, 0), text="Приблизна вартість:"),
+                TableCell(pos=(5, 0), text="Примітка:"),
+                TableCell(pos=(0, 1), text="Значення"),
+                TableCell(pos=(1, 1), text=f"Коліно (Діаметр: {elbow.diameter_mm} мм, Кут: {elbow.angle_deg}°, Сегментів: {elbow.segments})"),
+                TableCell(pos=(2, 1), text=f"{elbow.material.name}"),
+                TableCell(pos=(3, 1), text=f"{elbow.get_area_m2():.3f} м2"),
+                TableCell(pos=(4, 1), text=f"{elbow.get_cost():.2f} грн"),
+                TableCell(pos=(5, 1), text="Розрахунок базується на середній довжині дуги при R=1.5D")
+            ])
+        ])
 
     def calculate_air_flow_plot(self, diameter_mm: float, speed_min: float = 1, speed_max: float = 10):
         step = 0.5

@@ -2,13 +2,11 @@ import os
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, Border, Side
 from openpyxl.chart import ScatterChart, Reference, Series
-from core.service import Service
+from core.exporter import Exporter
 from core.response import Response, TextBox, TableBox, PlotBox
-from modules.excel_export.commands import ExportToExcelCommand
 
-class ExcelExportService(Service):
-    displayed_name = "Експорт в Excel"
-
+class ExcelExporter(Exporter):
+    display_name = "Експорт в Excel"
     BOLD_FONT = Font(bold=True)
     CENTER_ALIGNMENT = Alignment(horizontal='center', vertical='center')
     THIN_BORDER = Border(
@@ -20,27 +18,20 @@ class ExcelExportService(Service):
 
     def __init__(self, context):
         super().__init__(context)
-        self.last_response = None
-        self.register_command(ExportToExcelCommand.name, ExportToExcelCommand)
         self._handlers = {
             TextBox: self._handle_textbox,
             TableBox: self._handle_tablebox,
             PlotBox: self._handle_plotbox
         }
 
-    def handle_event(self, event):
-        from core.events import EventType
-        if event.type == EventType.COMMAND_EXECUTED:
-            result = event.data.get("result")
-            if isinstance(result, Response):
-                self.last_response = result
-
-    def export_last_response(self, filename: str):
-        if not self.last_response:
+    def export(self, destination: str, data: Response = None):
+        data_to_export = data or self.last_response
+        
+        if not data_to_export:
             return Response(boxes=[TextBox(text="Немає даних для експорту. Спочатку виконайте якусь команду.")])
 
-        if not filename.endswith(".xlsx"):
-            filename += ".xlsx"
+        if not destination.endswith(".xlsx"):
+            destination += ".xlsx"
 
         try:
             wb = Workbook()
@@ -48,15 +39,15 @@ class ExcelExportService(Service):
             ws.title = "Exported Data"
 
             current_row = 1
-            for box in self.last_response.boxes:
+            for box in data_to_export.boxes:
                 handler = self._handlers.get(type(box))
                 if handler:
                     current_row = handler(ws, box, current_row)
 
             self._adjust_column_widths(ws)
 
-            wb.save(filename)
-            return Response(boxes=[TextBox(text=f"Дані успішно експортовано у файл: {os.path.abspath(filename)}")])
+            wb.save(destination)
+            return Response(boxes=[TextBox(text=f"Дані успішно експортовано у файл: {os.path.abspath(destination)}")])
         except Exception as e:
             return Response(boxes=[TextBox(text=f"Помилка при експорті: {str(e)}")])
 

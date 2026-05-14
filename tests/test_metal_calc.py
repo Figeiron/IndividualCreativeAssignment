@@ -63,9 +63,14 @@ class TestMetalCalcModule(unittest.TestCase):
         # Cost = 0.07402 * 450 = 33.31
         result = self.service.calculate_elbow_unfolding(100, 90, 3, 1, False)
         self.assertIsInstance(result, Response)
-        self.assertIsInstance(result.boxes[0], TextBox)
-        self.assertIn("Приблизна площа: 0.074 м2", result.boxes[0].text)
-        self.assertIn("Приблизна вартість: 33.31 грн", result.boxes[0].text)
+        self.assertEqual(result.boxes[0].text, "Коліно")
+        
+        table = result.boxes[1]
+        self.assertIsInstance(table, TableBox)
+        
+        values = {c.pos[0]: c.text for c in table.cells if c.pos[1] == 1}
+        self.assertIn("0.074 м2", values[3])
+        self.assertIn("33.31 грн", values[4])
 
     def test_get_materials_command(self):
         command = GetMaterialsCommand(self.service)

@@ -19,6 +19,11 @@ class Application:
         self.context.events.emit(Event(EventType.SERVICE_AVAILABLE, service_name=name, service=service))
         self.services[name] = service
 
+    def register_exporter(self, exporter):
+        if hasattr(self.context, "exporters"):
+            self.context.exporters[exporter.display_name] = exporter
+        return exporter
+
     def run_command(self, command):
         return command.execute(self.context)
 
