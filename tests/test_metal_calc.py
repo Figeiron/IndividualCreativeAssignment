@@ -9,7 +9,7 @@ from modules.metal_calc.commands import (
     CalculateElbowCommand
 )
 
-from core.response import Response, TextBox
+from core.response import Response, TextBox, TableBox
 
 class TestMetalCalcModule(unittest.TestCase):
     def setUp(self):
@@ -31,19 +31,29 @@ class TestMetalCalcModule(unittest.TestCase):
         # Cost = 0.31416 * 450 = 141.37
         result = self.service.calculate_pipe_unfolding(100, 1000, 1, False)
         self.assertIsInstance(result, Response)
-        self.assertIsInstance(result.boxes[0], TextBox)
-        self.assertIn("Розгортка: 314.16 x 1000 мм", result.boxes[0].text)
-        self.assertIn("Площа: 0.314 м2", result.boxes[0].text)
-        self.assertIn("Вартість: 141.37 грн", result.boxes[0].text)
+        self.assertEqual(result.boxes[0].text, "Труба")
+        
+        table = result.boxes[1]
+        self.assertIsInstance(table, TableBox)
+        
+        # Check specific values in table
+        values = {c.pos[0]: c.text for c in table.cells if c.pos[1] == 1}
+        
+        self.assertEqual(values[2], "314.16 x 1000 мм")
+        self.assertEqual(values[4], "0.314 м2")
+        self.assertEqual(values[5], "141.37 грн")
 
     def test_calculate_pipe_command(self):
         # User enters 1 for the first material id 1
         command = CalculatePipeCommand(self.service, False, 1, 100.0, 1000.0)
         result = command._execute(self.context)
         self.assertIsInstance(result, Response)
-        self.assertIsInstance(result.boxes[0], TextBox)
-        self.assertIn("Розгортка: 314.16 x 1000.0 мм", result.boxes[0].text)
-        self.assertIn("Вартість: 141.37 грн", result.boxes[0].text)
+        
+        table = result.boxes[1]
+        values = {c.pos[0]: c.text for c in table.cells if c.pos[1] == 1}
+        
+        self.assertEqual(values[2], "314.16 x 1000.0 мм")
+        self.assertEqual(values[5], "141.37 грн")
 
     def test_calculate_elbow_unfolding(self):
         # Diameter 100, Angle 90, Segments 3, Material id 1 (S235 1mm - 450.0)
