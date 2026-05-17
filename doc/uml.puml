@@ -1,0 +1,75 @@
+@startuml "Exporter Class Diagram"
+
+interface EventListener {
+    + handle_event(event: Event)
+}
+
+abstract class Exporter {
+    {static} + display_name: str
+    + context: AppContext
+    + last_response: Response
+    + __init__(context: AppContext)
+    + handle_event(event: Event)
+    {abstract} + export(destination: str, data: Response)
+}
+
+class ExcelExporter {
+    {static} + display_name: str = "Експорт в Excel"
+    - _handlers: dict
+    + __init__(context: AppContext)
+    + export(destination: str, data: Response = None)
+    - _handle_textbox(ws, box: TextBox, current_row: int): int
+    - _handle_tablebox(ws, box: TableBox, current_row: int): int
+    - _handle_plotbox(ws, box: PlotBox, current_row: int): int
+    - _adjust_column_widths(ws)
+}
+
+class AppContext {
+    + data: dict
+    + events: EventDispatcher
+    + exporters: dict
+}
+
+class EventDispatcher {
+    - _queue: deque
+    - _subscribers: list
+    + has_events(): bool
+    + emit(event: Event)
+    + next_event(): Event
+    + subscribe(listener: EventListener)
+    + dispatch()
+}
+
+
+class Response {
+    + boxes: List[BaseBox]
+}
+
+abstract class BaseBox {
+}
+
+class TextBox {
+    + text: str
+}
+
+class TableBox {
+    + cells: List[TableCell]
+}
+
+class PlotBox {
+    + plot_points: List[Tuple[int, int]]
+}
+
+Exporter .up.|> EventListener
+Exporter <|-- ExcelExporter
+Exporter o-- AppContext
+Exporter o-- Response
+ExcelExporter ..> Response : produces
+Response *-- BaseBox
+BaseBox <|-- TextBox
+BaseBox <|-- TableBox
+BaseBox <|-- PlotBox
+AppContext o-- EventDispatcher
+EventDispatcher o-- EventListener : notifies
+
+@enduml
